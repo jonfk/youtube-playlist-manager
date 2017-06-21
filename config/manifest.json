@@ -1,0 +1,27 @@
+{
+  "manifest_version": 2,
+
+  "name": "youtube-playlist-manager",
+  "description": "Manages youtube playlists",
+  "version": "1.0",
+
+  "browser_action": {
+    "default_icon_bak": "icon.png",
+    "default_popup": "popup/popup.html",
+    "default_title": "Click here!"
+  },
+
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "alarms",
+    "system.cpu",
+    "system.memory",
+    "identity",
+    "identity.email",
+    "history",
+    "geolocation",
+    "storage",
+    "http://*/"
+  ]
+}
