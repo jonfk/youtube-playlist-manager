@@ -1,3 +1,3 @@
-
 var node = document.getElementById('main');
-var app = Elm.Main.embed(node, { token: "ya29.GltwBM2w0MV8qt9W_myLkcayVzYt5ghlQ4_nXOaTY6pfly-ZXKuxbaR3_cBsM6jW05MPpHNYWFthK41hqsACoJVhWKz0mc9vsTGTK5BPZXVRX5HyIzgGFQvtyt-Z"});
+var token = "ya29.GluGBLNCL8dK5PVKHc50rlj_RsFcPoafRypzUM7X-J2flXpvQ5QL4Z6s3Ar6YIfDp47Z3YP_d1La31FFGQvdydU-nGOKFJcIHKhoGwxwt2X3OJWYcY3aInp7Vnaq";
+var app = Elm.Main.embed(node, { token: token});
