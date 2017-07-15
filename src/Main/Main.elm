@@ -3,7 +3,10 @@ import Html.Events exposing (onClick)
 import Http
 import Maybe
 
+import Navigation exposing (Location)
+
 import Youtube.Playlist exposing (PlaylistItemListResponse, PlaylistItem, getPlaylistItems, Part(..), Filter(..))
+import Youtube.Authorize exposing (parseTokenFromRedirectUri)
 
 
 main : Program Flags Model Msg
@@ -17,10 +20,14 @@ main =
 
 initWithFlags : Flags -> (Model, Cmd Msg)
 initWithFlags flags =
-    ({ playlistItems = [], playlistResponses = [], err = Nothing, token = flags.token }, getPlaylistItems flags.token)
+    let
+        token = flags.redirectUri
+    in
+        ({ playlistItems = [], playlistResponses = [], err = Nothing, token = token }
+        , Cmd.none)
 
 type alias Flags =
-    { token : String
+    { redirectUri : String
     }
 
 -- MODEL
@@ -32,10 +39,11 @@ type alias Model =
     , token : String
     }
 
-
 -- UPDATE
 
 type Msg = NewPlaylistItems (Result Http.Error PlaylistItemListResponse)
+         | AuthorizeYoutube Bool
+         | AuthorizedRedirectUri Navigation.Location
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -48,21 +56,37 @@ update msg model =
           , fetchAllPlaylistItems model.token playlistItemResp)
       NewPlaylistItems (Err httpErr) ->
           ({ model | err = Just httpErr }, Cmd.none)
+      AuthorizeYoutube interactive ->
+          (model, Youtube.Authorize.authorize interactive)
+      AuthorizedRedirectUri redirectUri ->
+          let
+              a = Debug.log "redirectUri received" redirectUri
+              parsedToken = Debug.log "parsed token" <| parseTokenFromRedirectUri redirectUri
+          in
+              ({ model | token = Maybe.withDefault "" parsedToken }, Cmd.none)
 
+-- PORTS and SUBSCRIPTIONS
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Youtube.Authorize.authorizedRedirectUri AuthorizedRedirectUri
 
 -- VIEW
 
 view : Model -> Html Msg
 view model =
     let
+        authorizeButton = div []
+                    [ button [ onClick <| AuthorizeYoutube True ] [ text "Authorize login to youtube" ] ]
+        playlistItemsHtml = List.map viewPlaylistItem model.playlistItems
+
         debug = [ Html.p [] [ h2 [] [ text "Playlist Response" ]
                             , text (toString model.playlistResponses) ]
                 , Html.p [] [ h2 [] [ text "Debug Error" ]
                             , text (toString model.err) ]
                 ]
-        playlistItemsHtml = List.map viewPlaylistItem model.playlistItems
     in
-        div [] (playlistItemsHtml ++ debug)
+        div [] (authorizeButton :: playlistItemsHtml ++ debug)
 
 viewPlaylistItem : PlaylistItem -> Html Msg
 viewPlaylistItem item =
@@ -78,11 +102,6 @@ viewPlaylistItem item =
                          , Html.li [] [ text <| "playlistId: " ++ getWithDefault (\x -> x.playlistId) item ]
                          , Html.li [] [ text <| "position: " ++ getWithDefault (\x -> toString x.position) item ]
                          ] ]
-
--- Subscriptions
-
-subscriptions : Model -> Sub Msg
-subscriptions model = Sub.none
 
 -- Playlist
 

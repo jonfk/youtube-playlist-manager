@@ -1,27 +1,23 @@
 {
-  "manifest_version": 2,
+    "manifest_version": 2,
 
-  "name": "youtube-playlist-manager",
-  "description": "Manages youtube playlists",
-  "version": "1.0",
+    "key": "fimpcfnlpdgendkocldhdmnencooookk",
 
-  "browser_action": {
-    "default_icon_bak": "icon.png",
-    "default_popup": "popup/popup.html",
-    "default_title": "Click here!"
-  },
+    "name": "youtube-playlist-manager",
+    "description": "Manages youtube playlists",
+    "version": "1.0",
 
-  "permissions": [
-    "activeTab",
-    "tabs",
-    "alarms",
-    "system.cpu",
-    "system.memory",
-    "identity",
-    "identity.email",
-    "history",
-    "geolocation",
-    "storage",
-    "http://*/"
-  ]
+    "browser_action": {
+        "default_icon_bak": "icon.png",
+        "default_popup": "popup/popup.html",
+        "default_title": "Click here!"
+    },
+
+    "permissions": [
+        "identity",
+        "storage",
+        "http://*/",
+        "https://www.googleapis.com/auth/youtube.readonly",
+        "https://accounts.google.com/o/oauth2/v2/auth"
+    ]
 }
