@@ -1,11 +1,12 @@
 import Html exposing (Html, button, div, text, h2)
 import Html.Events exposing (onClick)
+import Html.Attributes
 import Http
 import Maybe
 
 import Navigation exposing (Location)
 
-import Youtube.Playlist exposing (PlaylistItemListResponse, PlaylistItem, getPlaylistItems, Part(..), Filter(..))
+import Youtube.Playlist exposing (PlaylistItemListResponse, PlaylistItem, Part(..), Filter(..))
 import Youtube.Authorize exposing (parseTokenFromRedirectUri)
 
 
@@ -20,15 +21,11 @@ main =
 
 initWithFlags : Flags -> (Model, Cmd Msg)
 initWithFlags flags =
-    let
-        token = flags.redirectUri
-    in
-        ({ playlistItems = [], playlistResponses = [], err = Nothing, token = token }
-        , Cmd.none)
+    ({ playlistItems = [], playlistResponses = [], err = Nothing, token = Nothing }
+    , Cmd.none)
 
 type alias Flags =
-    { redirectUri : String
-    }
+    {}
 
 -- MODEL
 
@@ -36,24 +33,34 @@ type alias Model =
     { playlistItems : List PlaylistItem
     , playlistResponses : List PlaylistItemListResponse
     , err : Maybe Http.Error
-    , token : String
+    , token : Maybe String
     }
 
 -- UPDATE
 
-type Msg = NewPlaylistItems (Result Http.Error PlaylistItemListResponse)
+type Msg = FetchNewPlaylistItems
+         | NewPlaylistItems (Result Http.Error PlaylistItemListResponse)
          | AuthorizeYoutube Bool
          | AuthorizedRedirectUri Navigation.Location
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
+      FetchNewPlaylistItems ->
+          let
+              mapfetch = Maybe.map (\token ->fetchPlaylistItems token) model.token
+              fetchIfTokenExists = Maybe.withDefault Cmd.none mapfetch
+          in
+              (model, fetchIfTokenExists)
       NewPlaylistItems (Ok playlistItemResp) ->
-          ({ model
-               | playlistResponses = playlistItemResp :: model.playlistResponses
-               , playlistItems = List.append model.playlistItems playlistItemResp.items
-           }
-          , fetchAllPlaylistItems model.token playlistItemResp)
+          let
+              token = Maybe.withDefault "" model.token
+          in
+              ({ model
+                   | playlistResponses = playlistItemResp :: model.playlistResponses
+                   , playlistItems = List.append model.playlistItems playlistItemResp.items
+               }
+              , fetchAllPlaylistItems token playlistItemResp)
       NewPlaylistItems (Err httpErr) ->
           ({ model | err = Just httpErr }, Cmd.none)
       AuthorizeYoutube interactive ->
@@ -63,7 +70,7 @@ update msg model =
               a = Debug.log "redirectUri received" redirectUri
               parsedToken = Debug.log "parsed token" <| parseTokenFromRedirectUri redirectUri
           in
-              ({ model | token = Maybe.withDefault "" parsedToken }, Cmd.none)
+              ({ model | token =  parsedToken }, Cmd.none)
 
 -- PORTS and SUBSCRIPTIONS
 
@@ -78,6 +85,13 @@ view model =
     let
         authorizeButton = div []
                     [ button [ onClick <| AuthorizeYoutube True ] [ text "Authorize login to youtube" ] ]
+
+        syncYoutubeButton =
+            let
+                buttonAttr = Maybe.withDefault (Html.Attributes.disabled True) <| Maybe.map (\token -> onClick <| FetchNewPlaylistItems) model.token
+            in
+                div [] [ button [ buttonAttr ] [ text "Sync Youtube"]]
+
         playlistItemsHtml = List.map viewPlaylistItem model.playlistItems
 
         debug = [ Html.p [] [ h2 [] [ text "Playlist Response" ]
@@ -86,7 +100,7 @@ view model =
                             , text (toString model.err) ]
                 ]
     in
-        div [] (authorizeButton :: playlistItemsHtml ++ debug)
+        div [] ([authorizeButton] ++ [syncYoutubeButton] ++ playlistItemsHtml ++ debug)
 
 viewPlaylistItem : PlaylistItem -> Html Msg
 viewPlaylistItem item =
@@ -105,17 +119,18 @@ viewPlaylistItem item =
 
 -- Playlist
 
-getPlaylistItems : String -> Cmd Msg
-getPlaylistItems token =
-    Http.send NewPlaylistItems <|
-        Youtube.Playlist.getPlaylistItems token [ IdPart, SnippetPart ] (PlaylistId "PLjcCiIbRzHcDHKqqcOghMQUFGv5wdE96F") (Just 10) Nothing Nothing Nothing
-
+fetchPlaylistItems : String -> Cmd Msg
+fetchPlaylistItems token =
+    fetchNextPlaylistItems token Nothing
 
 fetchAllPlaylistItems : String -> PlaylistItemListResponse -> Cmd Msg
 fetchAllPlaylistItems token resp =
-    Maybe.withDefault Cmd.none <| Maybe.map (fetchNextPlaylistItems token) resp.nextPageToken
+    case resp.nextPageToken of
+        Just nextPageToken -> fetchNextPlaylistItems token resp.nextPageToken
+        Nothing -> Cmd.none
 
-fetchNextPlaylistItems : String -> String -> Cmd Msg
+
+fetchNextPlaylistItems : String -> Maybe String -> Cmd Msg
 fetchNextPlaylistItems token nextPageToken =
     Http.send NewPlaylistItems <|
-        Youtube.Playlist.getPlaylistItems token [ IdPart, SnippetPart ] (PlaylistId "PLjcCiIbRzHcDHKqqcOghMQUFGv5wdE96F") (Just 10) Nothing (Just nextPageToken) Nothing
+        Youtube.Playlist.getPlaylistItems token [ IdPart, SnippetPart ] (PlaylistId "PLjcCiIbRzHcDHKqqcOghMQUFGv5wdE96F") (Just 10) Nothing nextPageToken Nothing
