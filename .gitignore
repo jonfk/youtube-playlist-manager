@@ -6,3 +6,4 @@ repl-temp-*
 target/
 build/
 .DS_Store
+tools/

@@ -27,3 +27,10 @@ clean:
 
 deep-clean: clean
 	rm -rf elm-stuff
+
+.PHONY: tools
+tools: tools/compiler-20170626.tar.gz
+
+tools/compiler-20170626.tar.gz:
+	wget http://dl.google.com/closure-compiler/compiler-20170626.tar.gz -O tools/compiler-20170626.tar.gz
+	tar xf tools/compiler-20170626.tar.gz -C tools
