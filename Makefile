@@ -1,11 +1,11 @@
 
 .PHONY: package-elm clean deep-clean
 
-package: target/main.js src/main/main-interop.js src/popup/popup-interop.js
+package: build/pouchdb.min.js temp_build/webpack temp_build/main.js src/main/main-interop.js src/popup/popup-interop.js
 	mkdir -p build/main build/popup
-	cp target/main.js build/main/main.js
+	cp temp_build/main.js build/main/main.js
 
-	cp src/main/main-interop.js build/main/
+	cp src/main/main-interop.js build/main/main-interop.js
 	cp src/main/main.html build/main/
 
 	cp src/popup/popup-interop.js build/popup/
@@ -15,22 +15,32 @@ package: target/main.js src/main/main-interop.js src/popup/popup-interop.js
 	cp config/manifest.json build/
 	@echo successfully packaged elm generated files and js files
 
-target/main.js: src/Main/Main.elm
-	elm-make src/Main/Main.elm --output target/main.js
+temp_build/main.js: src/Main/Main.elm
+	elm-make src/Main/Main.elm --output temp_build/main.js
 
-target/youtube/playlist.js: src/Youtube/Playlist.elm
-	elm-make src/Youtube/Playlist.elm --output target/youtube/playlist.js
+temp_build/youtube/playlist.js: src/Youtube/Playlist.elm
+	elm-make src/Youtube/Playlist.elm --output temp_build/youtube/playlist.js
 
 clean:
-	rm -rf target build/main/main.js
+	rm -rf temp_build build/main/main.js
 	rm -rf build
 
 deep-clean: clean
 	rm -rf elm-stuff
+	rm -rf node_modules
+
+# PouchDB
+node_modules/pouchdb/dist/pouchdb.min.js:
+	npm install
+
+build/pouchdb.min.js: node_modules/pouchdb/dist/pouchdb.min.js
+	mkdir -p build/
+	cp node_modules/pouchdb/dist/pouchdb.min.js build/
 
 .PHONY: tools
 tools: tools/compiler-20170626.tar.gz
 
+# closure compiler tools
 tools/compiler-20170626.tar.gz:
 	wget http://dl.google.com/closure-compiler/compiler-20170626.tar.gz -O tools/compiler-20170626.tar.gz
 	tar xf tools/compiler-20170626.tar.gz -C tools

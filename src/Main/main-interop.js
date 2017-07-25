@@ -1,18 +1,32 @@
+
+// DB Stuff
+var db = new PouchDB('kittens');
+
+var doc = {
+    "_id": "mittens",
+    "name": "Mittens",
+    "occupation": "kitten",
+    "age": 3,
+    "hobbies": [
+        "playing with balls of yarn",
+        "chasing laser pointers",
+        "lookin' hella cute"
+    ]
+};
+db.put(doc);
+db.get('mittens').then(function (doc) {
+    console.log(doc);
+});
+
 var redirectUri = chrome.identity.getRedirectURL();
 let clientId = "1022327474530-ij2unslv94d4hjcrdh4toijljd17kt4g.apps.googleusercontent.com";
 let scope = "https://www.googleapis.com/auth/youtube.readonly";
 let uri = 'https://accounts.google.com/o/oauth2/v2/auth?client_id=' +
     encodeURIComponent(clientId) +
-    '&response_type=token&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fyoutube.readonly&include_granted_scopes=true&state=state_parameter_passthrough' +
+    '&response_type=token&scope=' +
+    encodeURIComponent(scope) +
+    '&include_granted_scopes=true&state=state_parameter_passthrough' +
     '&redirect_uri=' + encodeURIComponent(redirectUri);
-
-console.log(uri);
-console.log(redirectUri);
-
-// chrome.identity.getAuthToken({'interactive' : true, 'scopes': [scope]}, function(token) {
-//     console.log('token');
-//     console.log(token);
-// });
 
 var node = document.getElementById('main');
 var token = "ya29.GluGBLNCL8dK5PVKHc50rlj_RsFcPoafRypzUM7X-J2flXpvQ5QL4Z6s3Ar6YIfDp47Z3YP_d1La31FFGQvdydU-nGOKFJcIHKhoGwxwt2X3OJWYcY3aInp7Vnaq";

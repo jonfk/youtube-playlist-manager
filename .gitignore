@@ -4,6 +4,7 @@ elm-stuff
 repl-temp-*
 
 target/
+temp_build/
 build/
 .DS_Store
 tools/
