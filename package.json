@@ -1,0 +1,17 @@
+{
+  "name": "youtube-playlist-manager-js-dependencies",
+  "version": "0.0.1",
+  "description": "",
+  "directories": {
+    "doc": "doc"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "webpack": "^3.3.0",
+    "webpack-closure-compiler": "^2.1.4"
+  }
+}
