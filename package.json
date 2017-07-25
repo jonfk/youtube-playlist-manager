@@ -13,5 +13,8 @@
   "devDependencies": {
     "webpack": "^3.3.0",
     "webpack-closure-compiler": "^2.1.4"
+  },
+  "dependencies": {
+    "pouchdb": "^6.3.4"
   }
 }
