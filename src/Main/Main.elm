@@ -8,6 +8,7 @@ import Navigation exposing (Location)
 
 import Youtube.Playlist exposing (PlaylistItemListResponse, PlaylistItem, Part(..), Filter(..))
 import Youtube.Authorize exposing (parseTokenFromRedirectUri)
+import PouchDB
 
 
 main : Program Flags Model Msg
@@ -55,12 +56,14 @@ update msg model =
       NewPlaylistItems (Ok playlistItemResp) ->
           let
               token = Maybe.withDefault "" model.token
+              documents = PouchDB.fromYoutubePlaylistItems playlistItemResp.items
+              commands = Cmd.batch [fetchAllPlaylistItems token playlistItemResp, PouchDB.storeVideos documents]
           in
               ({ model
                    | playlistResponses = playlistItemResp :: model.playlistResponses
                    , playlistItems = List.append model.playlistItems playlistItemResp.items
                }
-              , fetchAllPlaylistItems token playlistItemResp)
+              , commands)
       NewPlaylistItems (Err httpErr) ->
           ({ model | err = Just httpErr }, Cmd.none)
       AuthorizeYoutube interactive ->

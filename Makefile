@@ -1,7 +1,7 @@
 
 .PHONY: package-elm clean deep-clean
 
-package: build/pouchdb.min.js temp_build/webpack temp_build/main.js src/main/main-interop.js src/popup/popup-interop.js
+package: build/pouchdb.min.js temp_build/main.js src/main/main-interop.js src/popup/popup-interop.js
 	mkdir -p build/main build/popup
 	cp temp_build/main.js build/main/main.js
 
@@ -22,7 +22,7 @@ temp_build/youtube/playlist.js: src/Youtube/Playlist.elm
 	elm-make src/Youtube/Playlist.elm --output temp_build/youtube/playlist.js
 
 clean:
-	rm -rf temp_build build/main/main.js
+	rm -rf temp_build
 	rm -rf build
 
 deep-clean: clean
