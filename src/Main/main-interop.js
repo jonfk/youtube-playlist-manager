@@ -59,3 +59,46 @@ app.ports.storeVideos.subscribe(function(documents) {
         }
     });;
 });
+
+app.ports.fetchVideos.subscribe(function(args) {
+    console.log(args);
+    let allDocsArgs = {};
+    allDocsArgs.limit = args.limit;
+    allDocsArgs.include_docs = true;
+    allDocsArgs.descending = args.descending;
+    if (args.startKey !== null) {
+        allDocsArgs.startkey = args.startKey;
+    }
+    if (args.endKey !== null) {
+        allDocsArgs.endkey = args.endKey;
+    }
+
+    db.allDocs(allDocsArgs).then(function(result) {
+        let docs = [];
+        console.log(result);
+        // Reverse document order if descending since pouch will return in reverse order
+        if (args.descending) {
+            for (let i = result.rows.length - 1; i > 0; i--) {
+                docs.push(result.rows[i].doc);
+            }
+        } else {
+            for (let i = 0; i < result.rows.length; i++) {
+                docs.push(result.rows[i].doc);
+            }
+        }
+        app.ports.fetchedVideos.send(docs);
+    }).catch(function(err) {
+        console.log('fetchVideos error');
+        console.log(err);
+    });
+});
+
+app.ports.deleteDatabase.subscribe(function(args) {
+    db.destroy().then(function(response) {
+        // success
+        console.log('Deleted Database');
+    }).catch(function(err) {
+        console.log('deleteDatabase error');
+        console.log(err);
+    });
+});

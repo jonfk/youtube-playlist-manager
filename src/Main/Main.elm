@@ -23,15 +23,16 @@ main =
 initWithFlags : Flags -> (Model, Cmd Msg)
 initWithFlags flags =
     ({ playlistItems = [], playlistResponses = [], err = Nothing, token = Nothing }
-    , Cmd.none)
+    , PouchDB.fetchVideos PouchDB.defaultFetchVideosArgs)
 
 type alias Flags =
     {}
 
+
 -- MODEL
 
 type alias Model =
-    { playlistItems : List PlaylistItem
+    { playlistItems : List PouchDB.Document
     , playlistResponses : List PlaylistItemListResponse
     , err : Maybe Http.Error
     , token : Maybe String
@@ -43,6 +44,9 @@ type Msg = FetchNewPlaylistItems
          | NewPlaylistItems (Result Http.Error PlaylistItemListResponse)
          | AuthorizeYoutube Bool
          | AuthorizedRedirectUri Navigation.Location
+         | DeleteDatabase
+         | FetchedVideos (List PouchDB.Document)
+         | FetchVideos PouchDB.FetchVideosArgs
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -57,11 +61,10 @@ update msg model =
           let
               token = Maybe.withDefault "" model.token
               documents = PouchDB.fromYoutubePlaylistItems playlistItemResp.items
-              commands = Cmd.batch [fetchAllPlaylistItems token playlistItemResp, PouchDB.storeVideos documents]
+              commands = Cmd.batch [fetchAllPlaylistItemsAndRefreshPage token playlistItemResp, PouchDB.storeVideos documents]
           in
               ({ model
                    | playlistResponses = playlistItemResp :: model.playlistResponses
-                   , playlistItems = List.append model.playlistItems playlistItemResp.items
                }
               , commands)
       NewPlaylistItems (Err httpErr) ->
@@ -74,12 +77,19 @@ update msg model =
               parsedToken = Debug.log "parsed token" <| parseTokenFromRedirectUri redirectUri
           in
               ({ model | token =  parsedToken }, Cmd.none)
+      DeleteDatabase ->
+          (model, PouchDB.deleteDatabase True)
+      FetchVideos args ->
+          (model, PouchDB.fetchVideos args)
+      FetchedVideos videoDocuments ->
+          ({ model | playlistItems = videoDocuments}, Cmd.none)
 
 -- PORTS and SUBSCRIPTIONS
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Youtube.Authorize.authorizedRedirectUri AuthorizedRedirectUri
+    Sub.batch [ Youtube.Authorize.authorizedRedirectUri AuthorizedRedirectUri
+              , PouchDB.fetchedVideos FetchedVideos]
 
 -- VIEW
 
@@ -95,6 +105,19 @@ view model =
             in
                 div [] [ button [ buttonAttr ] [ text "Sync Youtube"]]
 
+        deleteDatabaseButton =
+            div [] [ button [ onClick DeleteDatabase ] [ text "Debug Delete Database"] ]
+
+        nextAndPrevButtons =
+            div [] [ button [ onClick <| FetchVideos { startKey = Maybe.map .id (List.head model.playlistItems)
+                                                   , endKey = Nothing
+                                                   , descending = True
+                                                   , limit = PouchDB.defaultVideosLimitArg } ] [ text "Prev"]
+                   , button [ onClick <| FetchVideos { startKey = Maybe.map .id (List.head <| List.reverse model.playlistItems)
+                                                   , endKey = Nothing
+                                                   , descending = False
+                                                   , limit = PouchDB.defaultVideosLimitArg } ] [ text "Next"]]
+
         playlistItemsHtml = List.map viewPlaylistItem model.playlistItems
 
         debug = [ Html.p [] [ h2 [] [ text "Playlist Response" ]
@@ -103,22 +126,21 @@ view model =
                             , text (toString model.err) ]
                 ]
     in
-        div [] ([authorizeButton] ++ [syncYoutubeButton] ++ playlistItemsHtml ++ debug)
+        div [] ([authorizeButton] ++ [syncYoutubeButton] ++ [deleteDatabaseButton] ++ [nextAndPrevButtons] ++ playlistItemsHtml ++ debug)
 
-viewPlaylistItem : PlaylistItem -> Html Msg
+viewPlaylistItem : PouchDB.Document -> Html Msg
 viewPlaylistItem item =
-    let
-        getWithDefault prop value = Maybe.withDefault "" <| Maybe.map (\x -> prop x) value.snippet
-    in
-        div []
-            [ Html.ul [] [ Html.li [] [ text <| "publishedAt: " ++ getWithDefault (\x -> x.publishedAt) item ]
-                         , Html.li [] [ text <| "channelId: " ++ getWithDefault (\x -> x.channelId) item ]
-                         , Html.li [] [ text <| "title: " ++ getWithDefault (\x -> x.title) item ]
-                         , Html.li [] [ text <| "description: " ++ getWithDefault (\x -> x.description) item ]
-                         , Html.li [] [ text <| "channelTitle: " ++ getWithDefault (\x -> x.channelTitle) item ]
-                         , Html.li [] [ text <| "playlistId: " ++ getWithDefault (\x -> x.playlistId) item ]
-                         , Html.li [] [ text <| "position: " ++ getWithDefault (\x -> toString x.position) item ]
-                         ] ]
+    div []
+        [ Html.ul [] [ Html.li [] [ text <| "_id: " ++ item.id ]
+                     , Html.li [] [ text <| "publishedAt: " ++ item.video.publishedAt ]
+                     , Html.li [] [ text <| "videoId: " ++ item.video.videoId ]
+                     , Html.li [] [ text <| "channelId: " ++ item.video.channelId ]
+                     , Html.li [] [ text <| "title: " ++ item.video.title ]
+                     , Html.li [] [ text <| "description: " ++ item.video.description ]
+                     , Html.li [] [ text <| "channelTitle: " ++ item.video.channelTitle ]
+                     , Html.li [] [ text <| "playlistId: " ++ item.video.playlistId ]
+                     , Html.li [] [ text <| "position: " ++ toString item.video.position ]
+                     ] ]
 
 -- Playlist
 
@@ -126,11 +148,15 @@ fetchPlaylistItems : String -> Cmd Msg
 fetchPlaylistItems token =
     fetchNextPlaylistItems token Nothing
 
-fetchAllPlaylistItems : String -> PlaylistItemListResponse -> Cmd Msg
-fetchAllPlaylistItems token resp =
+fetchAllPlaylistItemsAndRefreshPage : String -> PlaylistItemListResponse -> Cmd Msg
+fetchAllPlaylistItemsAndRefreshPage token resp =
+    let
+        fetchPlaylistItems = fetchNextPlaylistItems token resp.nextPageToken
+        fetchVideosFromPouchDB = PouchDB.fetchVideos PouchDB.defaultFetchVideosArgs
+    in
     case resp.nextPageToken of
-        Just nextPageToken -> fetchNextPlaylistItems token resp.nextPageToken
-        Nothing -> Cmd.none
+        Just nextPageToken -> Cmd.batch [ fetchPlaylistItems, fetchVideosFromPouchDB ]
+        Nothing -> fetchVideosFromPouchDB
 
 
 fetchNextPlaylistItems : String -> Maybe String -> Cmd Msg

@@ -2,6 +2,7 @@ port module PouchDB exposing (..)
 
 import Dict
 import Maybe
+import String exposing (padLeft)
 import Youtube.Playlist
 
 
@@ -24,6 +25,25 @@ type alias YoutubePlaylistVideo =
     , thumbnails : List ( String, Thumbnail )
     }
 
+type alias Document =
+    { id : String
+    , video : YoutubePlaylistVideo
+    , tags : List String
+    , notes : String
+    }
+
+type alias FetchVideosArgs =
+    { startKey : Maybe String
+    , endKey : Maybe String
+    , descending : Bool
+    , limit : Int
+    }
+
+defaultVideosLimitArg : Int
+defaultVideosLimitArg = 20
+
+defaultFetchVideosArgs : FetchVideosArgs
+defaultFetchVideosArgs = { startKey = Nothing, endKey = Nothing, descending = False, limit = 20 }
 
 fromYoutubePlaylistItem : Youtube.Playlist.PlaylistItem -> Maybe Document
 fromYoutubePlaylistItem item =
@@ -37,7 +57,7 @@ fromYoutubePlaylistItem item =
                     snippet.position
                 playlistId = snippet.playlistId
             in
-                { id = playlistId ++ "__" ++ toString position ++ "__"++ videoId
+                { id = playlistId ++ "\\" ++ (padLeft 5 '0' <| toString position) ++ "\\"++ videoId
                 , video =
                     { videoId = videoId
                     , publishedAt = snippet.publishedAt
@@ -64,13 +84,9 @@ fromYoutubePlaylistItems items =
     in
         List.concatMap (\x -> maybeToList <| fromYoutubePlaylistItem x) items
 
-
-type alias Document =
-    { id : String
-    , video : YoutubePlaylistVideo
-    , tags : List String
-    , notes : String
-    }
+youtubeVideoUrl : Document -> String
+youtubeVideoUrl doc =
+    "https://youtu.be/" ++ doc.video.videoId
 
 
 port storeVideo : Document -> Cmd msg
@@ -79,7 +95,10 @@ port storeVideo : Document -> Cmd msg
 port storeVideos : List Document -> Cmd msg
 
 
-port fetchVideos : Bool -> Cmd msg
+port fetchVideos : FetchVideosArgs -> Cmd msg
 
 
 port fetchedVideos : (List Document -> msg) -> Sub msg
+
+
+port deleteDatabase : Bool -> Cmd msg
