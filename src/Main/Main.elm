@@ -190,7 +190,7 @@ searchInputField =
     in
     div [] [
          Html.label [] [ text "Search: "
-                       , Html.input [ onKeyPress, onInput ] []
+                       , Html.input [ Html.Attributes.type_ "search", onKeyPress, onInput ] []
              ]
         ]
 
