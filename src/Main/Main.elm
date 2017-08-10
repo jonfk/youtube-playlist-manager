@@ -3,12 +3,14 @@ import Html.Events exposing (onClick)
 import Html.Attributes
 import Http
 import Maybe
+import Json.Decode
 
 import Navigation exposing (Location)
 
 import Youtube.Playlist exposing (PlaylistItemListResponse, PlaylistItem, Part(..), Filter(..))
 import Youtube.Authorize exposing (parseTokenFromRedirectUri)
 import PouchDB
+import PouchDB.Search
 
 
 main : Program Flags Model Msg
@@ -22,7 +24,14 @@ main =
 
 initWithFlags : Flags -> (Model, Cmd Msg)
 initWithFlags flags =
-    ({ playlistItems = [], playlistResponses = [], err = Nothing, token = Nothing }
+    ({ viewMode = ViewVideos
+     , playlistItems = []
+     , searchResults = []
+     , searchTerms = Nothing
+     , playlistResponses = []
+     , err = Nothing
+     , token = Nothing
+     }
     , PouchDB.fetchVideos PouchDB.defaultFetchVideosArgs)
 
 type alias Flags =
@@ -31,8 +40,14 @@ type alias Flags =
 
 -- MODEL
 
+type ViewMode = ViewVideos
+              | ViewSearchResults
+
 type alias Model =
-    { playlistItems : List PouchDB.Document
+    { viewMode : ViewMode
+    , playlistItems : List PouchDB.Document
+    , searchResults : List PouchDB.Document
+    , searchTerms : Maybe String
     , playlistResponses : List PlaylistItemListResponse
     , err : Maybe Http.Error
     , token : Maybe String
@@ -40,17 +55,22 @@ type alias Model =
 
 -- UPDATE
 
-type Msg = FetchNewPlaylistItems
+type Msg = NoOp
+         | FetchNewPlaylistItems
          | NewPlaylistItems (Result Http.Error PlaylistItemListResponse)
          | AuthorizeYoutube Bool
          | AuthorizedRedirectUri Navigation.Location
          | DeleteDatabase
          | FetchedVideos (List PouchDB.Document)
          | FetchVideos PouchDB.FetchVideosArgs
+         | StartSearch
+         | UpdateSearch String
+         | SearchedVideos (List PouchDB.Document)
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
+      NoOp -> (model, Cmd.none)
       FetchNewPlaylistItems ->
           let
               mapfetch = Maybe.map (\token ->fetchPlaylistItems token) model.token
@@ -83,13 +103,23 @@ update msg model =
           (model, PouchDB.fetchVideos args)
       FetchedVideos videoDocuments ->
           ({ model | playlistItems = videoDocuments}, Cmd.none)
+      StartSearch ->
+          let
+              searchCmd = Maybe.withDefault Cmd.none <| Maybe.map PouchDB.Search.searchVideos model.searchTerms
+          in
+              ({ model | viewMode = ViewSearchResults }, searchCmd)
+      UpdateSearch arg ->
+          if arg == "" then ({ model | searchTerms = Nothing, viewMode = ViewVideos }, Cmd.none) else ({ model | searchTerms = Just arg }, Cmd.none)
+      SearchedVideos videos ->
+          ({ model | searchResults = videos }, Cmd.none)
 
 -- PORTS and SUBSCRIPTIONS
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch [ Youtube.Authorize.authorizedRedirectUri AuthorizedRedirectUri
-              , PouchDB.fetchedVideos FetchedVideos]
+              , PouchDB.fetchedVideos FetchedVideos
+              , PouchDB.Search.searchedVideos SearchedVideos]
 
 -- VIEW
 
@@ -108,17 +138,8 @@ view model =
         deleteDatabaseButton =
             div [] [ button [ onClick DeleteDatabase ] [ text "Debug Delete Database"] ]
 
-        nextAndPrevButtons =
-            div [] [ button [ onClick <| FetchVideos { startKey = Maybe.map .id (List.head model.playlistItems)
-                                                   , endKey = Nothing
-                                                   , descending = True
-                                                   , limit = PouchDB.defaultVideosLimitArg } ] [ text "Prev"]
-                   , button [ onClick <| FetchVideos { startKey = Maybe.map .id (List.head <| List.reverse model.playlistItems)
-                                                   , endKey = Nothing
-                                                   , descending = False
-                                                   , limit = PouchDB.defaultVideosLimitArg } ] [ text "Next"]]
 
-        playlistItemsHtml = List.map viewPlaylistItem model.playlistItems
+        mainContent = if model.viewMode == ViewVideos then viewVideos model else viewSearchResults model
 
         debug = [ Html.p [] [ h2 [] [ text "Playlist Response" ]
                             , text (toString model.playlistResponses) ]
@@ -126,7 +147,7 @@ view model =
                             , text (toString model.err) ]
                 ]
     in
-        div [] ([authorizeButton] ++ [syncYoutubeButton] ++ [deleteDatabaseButton] ++ [nextAndPrevButtons] ++ playlistItemsHtml ++ debug)
+        div [] ([ authorizeButton, syncYoutubeButton, deleteDatabaseButton, searchInputField, mainContent ] ++ debug)
 
 viewPlaylistItem : PouchDB.Document -> Html Msg
 viewPlaylistItem item =
@@ -141,6 +162,41 @@ viewPlaylistItem item =
                      , Html.li [] [ text <| "playlistId: " ++ item.video.playlistId ]
                      , Html.li [] [ text <| "position: " ++ toString item.video.position ]
                      ] ]
+
+viewVideos : Model -> Html Msg
+viewVideos model =
+    let
+        nextAndPrevButtons =
+            div [] [ button [ onClick <| FetchVideos { startKey = Maybe.map .id (List.head model.playlistItems)
+                                                   , endKey = Nothing
+                                                   , descending = True
+                                                   , limit = PouchDB.defaultVideosLimitArg } ] [ text "Prev"]
+                   , button [ onClick <| FetchVideos { startKey = Maybe.map .id (List.head <| List.reverse model.playlistItems)
+                                                   , endKey = Nothing
+                                                   , descending = False
+                                                   , limit = PouchDB.defaultVideosLimitArg } ] [ text "Next"]]
+
+        playlistItemsHtml = List.map viewPlaylistItem model.playlistItems
+    in
+        div [] ([nextAndPrevButtons] ++ playlistItemsHtml)
+
+searchInputField : Html Msg
+searchInputField =
+    let
+        -- send search on enter pressed
+        handleKeyCode keyCode = if keyCode == 13 then StartSearch else NoOp
+        onKeyPress = Html.Events.on "keypress" (Json.Decode.map handleKeyCode Html.Events.keyCode)
+        onInput = Html.Events.onInput UpdateSearch
+    in
+    div [] [
+         Html.label [] [ text "Search: "
+                       , Html.input [ onKeyPress, onInput ] []
+             ]
+        ]
+
+viewSearchResults : Model -> Html Msg
+viewSearchResults model =
+    div [] <| List.map viewPlaylistItem model.searchResults
 
 -- Playlist
 

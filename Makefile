@@ -1,7 +1,7 @@
 
 .PHONY: package-elm clean deep-clean
 
-package: build/pouchdb.min.js temp_build/main.js src/main/main-interop.js src/popup/popup-interop.js
+package: build/pouchdb.min.js build/pouchdb.quick-search.min.js temp_build/main.js src/main/main-interop.js src/popup/popup-interop.js
 	mkdir -p build/main build/popup
 	cp temp_build/main.js build/main/main.js
 
@@ -36,6 +36,10 @@ node_modules/pouchdb/dist/pouchdb.min.js:
 build/pouchdb.min.js: node_modules/pouchdb/dist/pouchdb.min.js
 	mkdir -p build/
 	cp node_modules/pouchdb/dist/pouchdb.min.js build/
+
+build/pouchdb.quick-search.min.js:
+	mkdir -p build/
+	cp node_modules/pouchdb-quick-search/dist/pouchdb.quick-search.min.js build/
 
 .PHONY: tools
 tools: tools/compiler-20170626.tar.gz

@@ -2,6 +2,7 @@
 // DB Stuff
 var db = new PouchDB('youtube-manager');
 
+
 var node = document.getElementById('main');
 var token = "ya29.GluGBLNCL8dK5PVKHc50rlj_RsFcPoafRypzUM7X-J2flXpvQ5QL4Z6s3Ar6YIfDp47Z3YP_d1La31FFGQvdydU-nGOKFJcIHKhoGwxwt2X3OJWYcY3aInp7Vnaq";
 var app = Elm.Main.embed(node, {
@@ -101,4 +102,33 @@ app.ports.deleteDatabase.subscribe(function(args) {
         console.log('deleteDatabase error');
         console.log(err);
     });
+});
+
+// PouchDB Search
+
+let searchableFields = ['video.title', 'video.description', 'tags', 'notes'];
+
+db.search({
+    fields: searchableFields,
+    build: true
+}).then(function (info) {
+    console.log('search index build successfully');
+    console.log(info);
+}).catch(function (err) {
+    console.log('search index build failure');
+    console.log(err);
+});
+
+app.ports.searchVideos.subscribe(function(arg) {
+    db.search({ query : arg
+                , fields : searchableFields
+                , include_docs: true
+                , mm: '100%'
+              }).then(function(result) {
+                  let docs = [];
+                  for (let i = 0; i < result.rows.length; i++) {
+                      docs.push(result.rows[i].doc);
+                  }
+                  app.ports.searchedVideos.send(docs);
+              });
 });
