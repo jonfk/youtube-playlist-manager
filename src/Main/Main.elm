@@ -1,6 +1,6 @@
 import Html exposing (Html, button, div, text, h2)
 import Html.Events exposing (onClick)
-import Html.Attributes
+import Html.Attributes exposing (class, classList)
 import Http
 import Maybe
 import Json.Decode
@@ -126,19 +126,6 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     let
-        authorizeButton = div []
-                    [ button [ onClick <| AuthorizeYoutube True ] [ text "Authorize login to youtube" ] ]
-
-        syncYoutubeButton =
-            let
-                buttonAttr = Maybe.withDefault (Html.Attributes.disabled True) <| Maybe.map (\token -> onClick <| FetchNewPlaylistItems) model.token
-            in
-                div [] [ button [ buttonAttr ] [ text "Sync Youtube"]]
-
-        deleteDatabaseButton =
-            div [] [ button [ onClick DeleteDatabase ] [ text "Debug Delete Database"] ]
-
-
         mainContent = if model.viewMode == ViewVideos then viewVideos model else viewSearchResults model
 
         debug = [ Html.p [] [ h2 [] [ text "Playlist Response" ]
@@ -147,7 +134,9 @@ view model =
                             , text (toString model.err) ]
                 ]
     in
-        div [] ([ authorizeButton, syncYoutubeButton, deleteDatabaseButton, searchInputField, mainContent ] ++ debug)
+        div [ class "columns" ] [ div [ classList [("column", True), ("is-2", True)] ] [ viewMenu model ]
+                                      , div [ class "column"] ([ mainContent ] ++ debug)
+                                ]
 
 viewPlaylistItem : PouchDB.Document -> Html Msg
 viewPlaylistItem item =
@@ -181,6 +170,35 @@ viewVideos model =
     in
         div [] ([nextAndPrevButtons] ++ playlistItemsHtml)
 
+viewMenu : Model -> Html Msg
+viewMenu model =
+    let
+        authorizeYoutubeMenuItem = Html.li [] [ Html.a [ onClick <| AuthorizeYoutube True ] [ text "Authorize Youtube Login"]]
+
+        generalMenuItems = [ searchInputMenuItem, authorizeYoutubeMenuItem]
+                           ++ (Maybe.withDefault [] <| Maybe.map (\x -> [x]) <| syncYoutubeMenuItem model.token)
+                               ++ [deleteDatabase]
+
+        deleteDatabase = Html.li [] [ Html.a [ onClick DeleteDatabase ] [ text "Debug Delete Database"] ]
+
+    in
+    Html.aside [class "menu"] [ Html.p [class "menu-label"] [ text "General" ]
+                              , Html.ul [class "menu-list"] generalMenuItems
+                              ]
+
+syncYoutubeMenuItem : Maybe String -> Maybe (Html Msg)
+syncYoutubeMenuItem token =
+    Maybe.map (\_ -> Html.li [] [ Html.a [ onClick FetchNewPlaylistItems] [ text "Sync Youtube Playlists" ] ]) token
+
+searchInputMenuItem : Html Msg
+searchInputMenuItem =
+    div [ class "field"] [ div [class "field-body"]
+                             [ div [class "field"]
+                                   [ div [class "control"] [ searchInputField ]
+                                   ]
+                             ]
+                         ]
+
 searchInputField : Html Msg
 searchInputField =
     let
@@ -189,11 +207,7 @@ searchInputField =
         onKeyPress = Html.Events.on "keypress" (Json.Decode.map handleKeyCode Html.Events.keyCode)
         onInput = Html.Events.onInput UpdateSearch
     in
-    div [] [
-         Html.label [] [ text "Search: "
-                       , Html.input [ Html.Attributes.type_ "search", onKeyPress, onInput ] []
-             ]
-        ]
+        Html.input [ Html.Attributes.type_ "search", onKeyPress, onInput, class "input", Html.Attributes.placeholder "Search Youtube" ] []
 
 viewSearchResults : Model -> Html Msg
 viewSearchResults model =

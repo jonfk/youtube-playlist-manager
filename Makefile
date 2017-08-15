@@ -1,7 +1,7 @@
 
-.PHONY: package-elm clean deep-clean
+.PHONY: package-elm clean deep-clean dependencies
 
-package: build/pouchdb.min.js build/pouchdb.quick-search.min.js temp_build/main.js src/main/main-interop.js src/popup/popup-interop.js
+package: dependencies temp_build/main.js src/main/main-interop.js src/popup/popup-interop.js
 	mkdir -p build/main build/popup
 	cp temp_build/main.js build/main/main.js
 
@@ -28,6 +28,8 @@ clean:
 deep-clean: clean
 	rm -rf elm-stuff
 	rm -rf node_modules
+
+dependencies: build/bulma.css node_modules/pouchdb/dist/pouchdb.min.js build/pouchdb.min.js build/pouchdb.quick-search.min.js
 
 # PouchDB
 node_modules/pouchdb/dist/pouchdb.min.js:

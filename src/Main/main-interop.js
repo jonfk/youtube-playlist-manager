@@ -34,11 +34,14 @@ app.ports.authorize.subscribe(function(interactive) {
     }, function(redirectUrl) {
         if (chrome.runtime.lastError) {
             console.log(chrome.runtime.lastError);
+        } else {
+            if (redirectUrl) {
+                let url = document.createElement('a');
+                url.href = redirectUrl;
+                url.port_ = url.port;
+                app.ports.authorizedRedirectUri.send(url);
+            }
         }
-        let url = document.createElement('a');
-        url.href = redirectUrl;
-        url.port_ = url.port;
-        app.ports.authorizedRedirectUri.send(url);
     });
 });
 
