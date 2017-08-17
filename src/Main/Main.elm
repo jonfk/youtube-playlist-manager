@@ -28,7 +28,7 @@ view model =
     let
         mainContent =
             if model.viewMode == ViewVideos then
-                viewVideos model
+                viewVideos2 model
             else
                 viewSearchResults model
 
@@ -67,6 +67,25 @@ viewPlaylistItem item =
         ]
 
 
+viewVideoItem : PouchDB.Document -> Html Msg
+viewVideoItem item =
+    let
+        videoThumbnailUrl =
+            Maybe.withDefault "" <|
+                Maybe.map (\( name, thumb ) -> thumb.url) <|
+                    List.head <|
+                        List.filter (\( name, thumbnail ) -> name == "medium") item.video.thumbnails
+    in
+        div [ class "card" ]
+            [ div [ class "card-image" ]
+                  [ Html.img [ Html.Attributes.src videoThumbnailUrl, Html.Attributes.alt item.video.title, Html.Attributes.width 320] []
+                , div [class "card-content"] [ Html.p [class "title is-6"] [text item.video.title]
+                                             , Html.p [class "subtitle is-6"] [text item.video.publishedAt]
+                                             , div [class "content"] [text item.video.description]
+                                             ]
+                ]
+            ]
+
 
 viewVideos : Model -> Html Msg
 viewVideos model =
@@ -97,6 +116,45 @@ viewVideos model =
 
         playlistItemsHtml =
             List.map viewPlaylistItem model.playlistItems
+
+        playlistItemsDivs = List.map insertPlaylistItemColumn playlistItemsHtml
+
+        insertPlaylistItemColumn item = div [class "column is-2 is-narrow"] [item]
+
+    in
+        div [] [ nextAndPrevButtons
+                , div [class "columns"] playlistItemsDivs
+               ]
+
+viewVideos2 : Model -> Html Msg
+viewVideos2 model =
+    let
+        nextAndPrevButtons =
+            div []
+                [ button
+                    [ onClick <|
+                        FetchVideos
+                            { startKey = Maybe.map .id (List.head model.playlistItems)
+                            , endKey = Nothing
+                            , descending = True
+                            , limit = PouchDB.defaultVideosLimitArg
+                            }
+                    ]
+                    [ text "Prev" ]
+                , button
+                    [ onClick <|
+                        FetchVideos
+                            { startKey = Maybe.map .id (List.head <| List.reverse model.playlistItems)
+                            , endKey = Nothing
+                            , descending = False
+                            , limit = PouchDB.defaultVideosLimitArg
+                            }
+                    ]
+                    [ text "Next" ]
+                ]
+
+        playlistItemsHtml =
+            List.map viewVideoItem model.playlistItems
     in
         div [] ([ nextAndPrevButtons ] ++ playlistItemsHtml)
 
