@@ -29,3 +29,6 @@
 ### PouchDB
 - https://pouchdb.com/2014/04/14/pagination-strategies-with-pouchdb.html
 - https://github.com/pouchdb-community/pouchdb-quick-search
+
+## TODO
+- Fetch each video from the playlist to get channel title, duration
