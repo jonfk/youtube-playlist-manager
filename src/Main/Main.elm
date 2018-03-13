@@ -1,11 +1,11 @@
 module Main exposing (..)
 
-import Html exposing (Html, button, div, text, h2)
-import Html.Events exposing (onClick)
+import Html exposing (Html, button, div, h2, text)
 import Html.Attributes exposing (class, classList)
-import Maybe
+import Html.Events exposing (onClick)
 import Json.Decode
 import Main.State exposing (..)
+import Maybe
 import PouchDB
 
 
@@ -43,10 +43,10 @@ view model =
                 ]
             ]
     in
-        div [ class "columns" ]
-            [ div [ classList [ ( "column", True ), ( "is-2", True ) ] ] [ viewMenu model ]
-            , div [ class "column" ] ([ mainContent ] ++ debug)
-            ]
+    div [ class "columns" ]
+        [ div [ classList [ ( "column", True ), ( "is-2", True ) ] ] [ viewMenu model ]
+        , div [ class "column" ] ([ mainContent ] ++ debug)
+        ]
 
 
 viewPlaylistItem : PouchDB.Document -> Html Msg
@@ -76,15 +76,16 @@ viewVideoItem item =
                     List.head <|
                         List.filter (\( name, thumbnail ) -> name == "medium") item.video.thumbnails
     in
-        div [ class "card" ]
-            [ div [ class "card-image" ]
-                  [ Html.img [ Html.Attributes.src videoThumbnailUrl, Html.Attributes.alt item.video.title, Html.Attributes.width 320] []
-                , div [class "card-content"] [ Html.p [class "title is-6"] [text item.video.title]
-                                             , Html.p [class "subtitle is-6"] [text item.video.publishedAt]
-                                             , div [class "content"] [text item.video.description]
-                                             ]
+    div [ class "card" ]
+        [ div [ class "card-image" ]
+            [ Html.img [ Html.Attributes.src videoThumbnailUrl, Html.Attributes.alt item.video.title, Html.Attributes.width 320 ] []
+            , div [ class "card-content" ]
+                [ Html.p [ class "title is-6" ] [ text item.video.title ]
+                , Html.p [ class "subtitle is-6" ] [ text item.video.publishedAt ]
+                , div [ class "content" ] [ text item.video.description ]
                 ]
             ]
+        ]
 
 
 viewVideos : Model -> Html Msg
@@ -117,14 +118,17 @@ viewVideos model =
         playlistItemsHtml =
             List.map viewPlaylistItem model.playlistItems
 
-        playlistItemsDivs = List.map insertPlaylistItemColumn playlistItemsHtml
+        playlistItemsDivs =
+            List.map insertPlaylistItemColumn playlistItemsHtml
 
-        insertPlaylistItemColumn item = div [class "column is-2 is-narrow"] [item]
-
+        insertPlaylistItemColumn item =
+            div [ class "column is-2 is-narrow" ] [ item ]
     in
-        div [] [ nextAndPrevButtons
-                , div [class "columns"] playlistItemsDivs
-               ]
+    div []
+        [ nextAndPrevButtons
+        , div [ class "columns" ] playlistItemsDivs
+        ]
+
 
 viewVideos2 : Model -> Html Msg
 viewVideos2 model =
@@ -156,7 +160,7 @@ viewVideos2 model =
         playlistItemsHtml =
             List.map viewVideoItem model.playlistItems
     in
-        div [] ([ nextAndPrevButtons ] ++ playlistItemsHtml)
+    div [] ([ nextAndPrevButtons ] ++ playlistItemsHtml)
 
 
 viewMenu : Model -> Html Msg
@@ -173,10 +177,10 @@ viewMenu model =
         deleteDatabase =
             Html.li [] [ Html.a [ onClick DeleteDatabase ] [ text "Debug Delete Database" ] ]
     in
-        Html.aside [ class "menu" ]
-            [ Html.p [ class "menu-label" ] [ text "General" ]
-            , Html.ul [ class "menu-list" ] generalMenuItems
-            ]
+    Html.aside [ class "menu" ]
+        [ Html.p [ class "menu-label" ] [ text "General" ]
+        , Html.ul [ class "menu-list" ] generalMenuItems
+        ]
 
 
 syncYoutubeMenuItem : Maybe String -> Maybe (Html Msg)
@@ -211,7 +215,7 @@ searchInputField =
         onInput =
             Html.Events.onInput UpdateSearch
     in
-        Html.input [ Html.Attributes.type_ "search", onKeyPress, onInput, class "input", Html.Attributes.placeholder "Search Youtube" ] []
+    Html.input [ Html.Attributes.type_ "search", onKeyPress, onInput, class "input", Html.Attributes.placeholder "Search Youtube" ] []
 
 
 viewSearchResults : Model -> Html Msg
