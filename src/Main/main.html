@@ -1,17 +1,41 @@
 <!doctype html>
 <html>
-  <head>
+
+<head>
     <title>Youtube Playlist Manager</title>
+    <!-- MDL
+             The library relies on Google's Material Design fonts, icons, and the CSS
+             of Google's Material Design Lite implementation. Load these as follows.
+           -->
+    <link href='https://fonts.googleapis.com/css?family=Roboto:400,300,500|Roboto+Mono|Roboto+Condensed:400,700&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://code.getmdl.io/1.2.0/material.cyan-light_blue.min.css" />
+
+    <!-- Dialogs
+             The Dialog component requires a polyfill on most browsers. If your app
+             uses Dialogs and is expected to work outside Google Chrome, get the
+             polyfill at the URL below and load as follows.
+
+             https://github.com/GoogleChrome/dialog-polyfill
+           -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dialog-polyfill/0.4.4/dialog-polyfill.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/dialog-polyfill/0.4.4/dialog-polyfill.min.css" />
+
+    <!-- Event.focusin
+             Polyfill required for Firefox to support focusin and focusout events
+           -->
+    <script src="https://cdn.polyfill.io/v2/polyfill.js?features=Event.focusin"></script>
 
     <link rel="stylesheet" href="/style.css">
-    <link rel="stylesheet" href="/bulma.css">
-  </head>
-  <body>
-      <div id="main"></div>
+</head>
+
+<body>
+    <div id="main"></div>
 
     <script src="main.js"></script>
     <script src="../pouchdb.min.js"></script>
     <script src="../pouchdb.quick-search.min.js"></script>
     <script src="main-interop.js"></script>
-  </body>
+</body>
+
 </html>

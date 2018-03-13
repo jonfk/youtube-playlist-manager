@@ -36,7 +36,7 @@ urlFor : Route -> String
 urlFor loc =
     case loc of
         Home ->
-            "#home"
+            "#/"
 
         Settings ->
             "#settings"

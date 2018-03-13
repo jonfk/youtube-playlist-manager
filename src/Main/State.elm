@@ -2,6 +2,7 @@ module Main.State exposing (..)
 
 import Http
 import Main.Route as Route exposing (..)
+import Material
 import Navigation
 import PouchDB
 import PouchDB.Search
@@ -19,6 +20,7 @@ type ViewMode
 
 type alias Model =
     { location : Maybe Route.Route
+    , mdl : Material.Model
     , viewMode : ViewMode
     , playlistItems : List PouchDB.Document
     , searchResults : List PouchDB.Document
@@ -36,6 +38,8 @@ type alias Model =
 type Msg
     = NoOp
     | NavigateTo Navigation.Location
+    | Mdl (Material.Msg Msg)
+    | NewUrl String
     | FetchNewPlaylistItems
     | NewPlaylistItems (Result Http.Error PlaylistItemListResponse)
     | AuthorizeYoutube Bool
@@ -58,6 +62,12 @@ update msg model =
             location
                 |> Route.locFor
                 |> urlUpdate model
+
+        Mdl msg_ ->
+            Material.update Mdl msg_ model
+        NewUrl url ->
+            model ! [ Navigation.newUrl url ]
+
 
         FetchNewPlaylistItems ->
             let
