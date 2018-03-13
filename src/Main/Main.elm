@@ -1,22 +1,43 @@
 module Main exposing (..)
 
+import Navigation
 import Html exposing (Html, button, div, h2, text)
 import Html.Attributes exposing (class, classList)
 import Html.Events exposing (onClick)
 import Json.Decode
 import Main.State exposing (..)
+import Main.Route as Route
 import Maybe
 import PouchDB
 
 
 main : Program Flags Model Msg
 main =
-    Html.programWithFlags
+    Navigation.programWithFlags NavigateTo
         { init = initWithFlags
         , update = update
         , subscriptions = subscriptions
         , view = view
         }
+
+initWithFlags : Flags -> Navigation.Location -> ( Model, Cmd Msg )
+initWithFlags flags location =
+    ( { location = Route.locFor location
+    , viewMode = ViewVideos
+      , playlistItems = []
+      , searchResults = []
+      , searchTerms = Nothing
+      , playlistResponses = []
+      , err = Nothing
+      , token = Nothing
+      }
+    , PouchDB.fetchVideos PouchDB.defaultFetchVideosArgs
+    )
+
+
+type alias Flags =
+    { extensionId : String
+    }
 
 
 
@@ -25,28 +46,29 @@ main =
 
 view : Model -> Html Msg
 view model =
-    let
-        mainContent =
-            if model.viewMode == ViewVideos then
-                viewVideos2 model
-            else
-                viewSearchResults model
+    div [] [text <| toString model]
+    -- let
+    --     mainContent =
+    --         if model.viewMode == ViewVideos then
+    --             viewVideos2 model
+    --         else
+    --             viewSearchResults model
 
-        debug =
-            [ Html.p []
-                [ h2 [] [ text "Playlist Response" ]
-                , text (toString model.playlistResponses)
-                ]
-            , Html.p []
-                [ h2 [] [ text "Debug Error" ]
-                , text (toString model.err)
-                ]
-            ]
-    in
-    div [ class "columns" ]
-        [ div [ classList [ ( "column", True ), ( "is-2", True ) ] ] [ viewMenu model ]
-        , div [ class "column" ] ([ mainContent ] ++ debug)
-        ]
+    --     debug =
+    --         [ Html.p []
+    --             [ h2 [] [ text "Playlist Response" ]
+    --             , text (toString model.playlistResponses)
+    --             ]
+    --         , Html.p []
+    --             [ h2 [] [ text "Debug Error" ]
+    --             , text (toString model.err)
+    --             ]
+    --         ]
+    -- in
+    -- div [ class "columns" ]
+    --     [ div [ classList [ ( "column", True ), ( "is-2", True ) ] ] [ viewMenu model ]
+    --     , div [ class "column" ] ([ mainContent ] ++ debug)
+    --     ]
 
 
 viewPlaylistItem : PouchDB.Document -> Html Msg

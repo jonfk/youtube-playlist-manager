@@ -1,30 +1,12 @@
 module Main.State exposing (..)
 
 import Http
-import Navigation exposing (Location)
+import Main.Route as Route exposing (..)
+import Navigation
 import PouchDB
 import PouchDB.Search
 import Youtube.Authorize exposing (parseTokenFromRedirectUri)
 import Youtube.Playlist exposing (Filter(..), Part(..), PlaylistItem, PlaylistItemListResponse)
-
-
-initWithFlags : Flags -> ( Model, Cmd Msg )
-initWithFlags flags =
-    ( { viewMode = ViewVideos
-      , playlistItems = []
-      , searchResults = []
-      , searchTerms = Nothing
-      , playlistResponses = []
-      , err = Nothing
-      , token = Nothing
-      }
-    , PouchDB.fetchVideos PouchDB.defaultFetchVideosArgs
-    )
-
-
-type alias Flags =
-    {}
-
 
 
 -- MODEL
@@ -36,7 +18,8 @@ type ViewMode
 
 
 type alias Model =
-    { viewMode : ViewMode
+    { location : Maybe Route.Route
+    , viewMode : ViewMode
     , playlistItems : List PouchDB.Document
     , searchResults : List PouchDB.Document
     , searchTerms : Maybe String
@@ -52,6 +35,7 @@ type alias Model =
 
 type Msg
     = NoOp
+    | NavigateTo Navigation.Location
     | FetchNewPlaylistItems
     | NewPlaylistItems (Result Http.Error PlaylistItemListResponse)
     | AuthorizeYoutube Bool
@@ -69,6 +53,11 @@ update msg model =
     case msg of
         NoOp ->
             ( model, Cmd.none )
+
+        NavigateTo location ->
+            location
+                |> Route.locFor
+                |> urlUpdate model
 
         FetchNewPlaylistItems ->
             let
@@ -139,7 +128,17 @@ update msg model =
             ( { model | searchResults = videos }, Cmd.none )
 
 
+urlUpdate : Model -> Maybe Route -> ( Model, Cmd Msg )
+urlUpdate model route =
+    let
+        newModel =
+            { model | location = route }
+    in
+    newModel ! []
 
+
+
+--Pages.cmdOnNewLocation route ]
 -- Playlist
 
 
