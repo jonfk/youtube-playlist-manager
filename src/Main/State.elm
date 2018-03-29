@@ -8,6 +8,7 @@ import PouchDB
 import PouchDB.Search
 import Youtube.Authorize exposing (parseTokenFromRedirectUri)
 import Youtube.Playlist exposing (Filter(..), Part(..), PlaylistItem, PlaylistItemListResponse)
+import Main.Pages.Videos
 
 
 -- MODEL
@@ -21,6 +22,8 @@ type ViewMode
 type alias Model =
     { location : Maybe Route.Route
     , mdl : Material.Model
+    , videosPage: Main.Pages.Videos.Model
+
     , viewMode : ViewMode
     , playlistItems : List PouchDB.Document
     , searchResults : List PouchDB.Document
@@ -40,6 +43,8 @@ type Msg
     | NavigateTo Navigation.Location
     | Mdl (Material.Msg Msg)
     | NewUrl String
+    | VideosMsg (Main.Pages.Videos.Msg)
+    -- OLD
     | FetchNewPlaylistItems
     | NewPlaylistItems (Result Http.Error PlaylistItemListResponse)
     | AuthorizeYoutube Bool
@@ -65,8 +70,19 @@ update msg model =
 
         Mdl msg_ ->
             Material.update Mdl msg_ model
+
         NewUrl url ->
             model ! [ Navigation.newUrl url ]
+
+        VideosMsg videosMsg_ ->
+            let
+                ( subModel, subCmd ) =
+                    Main.Pages.Videos.update videosMsg_ model.videosPage
+            in
+            { model | videosPage = subModel } ! [ Cmd.map VideosMsg subCmd ]
+
+
+        -- OLD
 
 
         FetchNewPlaylistItems ->

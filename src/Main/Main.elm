@@ -16,6 +16,7 @@ import Material.Scheme
 import Maybe
 import Navigation
 import PouchDB
+import Main.Pages.Videos
 
 
 main : Program Flags Model Msg
@@ -32,6 +33,8 @@ initWithFlags : Flags -> Navigation.Location -> ( Model, Cmd Msg )
 initWithFlags flags location =
     ( { location = Route.locFor location
       , mdl = Material.model
+      , videosPage = Main.Pages.Videos.initialModel
+
       , viewMode = ViewVideos
       , playlistItems = []
       , searchResults = []
@@ -167,8 +170,17 @@ viewHeader model =
 
 viewBody : Model -> Html Msg
 viewBody model =
-    div [] [ text <| toString model ]
+    case model.location of
+        Nothing ->
+            text "404"
 
+        Just Route.Home ->
+            Main.Pages.Videos.view model.videosPage |> Html.map VideosMsg
+
+        _ ->
+            text "Not yet implemented"
+
+-- OLD
 
 viewPlaylistItem : PouchDB.Document -> Html Msg
 viewPlaylistItem item =
