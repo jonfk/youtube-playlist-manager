@@ -9,6 +9,7 @@ import PouchDB.Search
 import Youtube.Authorize exposing (parseTokenFromRedirectUri)
 import Youtube.Playlist exposing (Filter(..), Part(..), PlaylistItem, PlaylistItemListResponse)
 import Main.Pages.Videos
+import Main.Pages as Pages
 
 
 -- MODEL
@@ -160,11 +161,19 @@ urlUpdate model route =
         newModel =
             { model | location = route }
     in
-    newModel ! []
+    newModel ! [ cmdOnNewLocation route ]
 
 
+cmdOnNewLocation : Maybe Route.Route -> Cmd Msg
+cmdOnNewLocation route =
+    case route of
+        Nothing ->
+            Cmd.none
+        Just Route.Home ->
+            Cmd.none
+        Just Route.Settings ->
+            Cmd.none
 
---Pages.cmdOnNewLocation route ]
 -- Playlist
 
 
