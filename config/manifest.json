@@ -16,6 +16,7 @@
     "permissions": [
         "identity",
         "storage",
+        "unlimitedStorage",
         "http://*/",
         "https://www.googleapis.com/auth/youtube.readonly",
         "https://accounts.google.com/o/oauth2/v2/auth"
