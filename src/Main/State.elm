@@ -9,7 +9,6 @@ import PouchDB.Search
 import Youtube.Authorize exposing (parseTokenFromRedirectUri)
 import Youtube.Playlist exposing (Filter(..), Part(..), PlaylistItem, PlaylistItemListResponse)
 import Main.Pages.Videos
-import Main.Pages as Pages
 
 
 -- MODEL
@@ -215,4 +214,5 @@ subscriptions model =
         [ Youtube.Authorize.authorizedRedirectUri AuthorizedRedirectUri
         , PouchDB.fetchedVideos FetchedVideos
         , PouchDB.Search.searchedVideos SearchedVideos
+        , Sub.map VideosMsg <| Main.Pages.Videos.subscriptions model.videosPage
         ]
