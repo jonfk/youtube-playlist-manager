@@ -4,6 +4,8 @@ import Html exposing (Html, button, div, h2, text)
 import Html.Attributes exposing (class, classList)
 import Html.Events exposing (onClick)
 import Json.Decode
+import Main.Pages.Settings
+import Main.Pages.Videos
 import Main.Route as Route
 import Main.State exposing (..)
 import Material
@@ -16,8 +18,6 @@ import Material.Scheme
 import Maybe
 import Navigation
 import PouchDB
-import Main.Pages.Videos
-import Main.Pages.Settings
 
 
 main : Program Flags Model Msg
@@ -36,7 +36,6 @@ initWithFlags flags location =
       , mdl = Material.model
       , videosPage = Main.Pages.Videos.initialModel
       , settingsPage = Main.Pages.Settings.initialModel
-
       , viewMode = ViewVideos
       , playlistItems = []
       , searchResults = []
@@ -75,30 +74,6 @@ view model =
                 [ viewBody model
                 ]
             }
-
-
-
--- let
---     mainContent =
---         if model.viewMode == ViewVideos then
---             viewVideos2 model
---         else
---             viewSearchResults model
---     debug =
---         [ Html.p []
---             [ h2 [] [ text "Playlist Response" ]
---             , text (toString model.playlistResponses)
---             ]
---         , Html.p []
---             [ h2 [] [ text "Debug Error" ]
---             , text (toString model.err)
---             ]
---         ]
--- in
--- div [ class "columns" ]
---     [ div [ classList [ ( "column", True ), ( "is-2", True ) ] ] [ viewMenu model ]
---     , div [ class "column" ] ([ mainContent ] ++ debug)
---     ]
 
 
 type alias MenuItem =
@@ -167,7 +142,7 @@ viewHeader : Model -> Html Msg
 viewHeader model =
     Layout.row
         []
-        [ Layout.title [] [ text "PMedia Org" ] ]
+        [ Layout.title [] [ text "Youtube Playlist Manager" ] ]
 
 
 viewBody : Model -> Html Msg
@@ -181,4 +156,3 @@ viewBody model =
 
         Just Route.Settings ->
             Main.Pages.Settings.view model.settingsPage |> Html.map SettingsMsg
-
