@@ -50,7 +50,6 @@ type Msg
     | AuthorizeYoutube Bool
     | AuthorizedRedirectUri Navigation.Location
     | DeleteDatabase
-    | FetchedVideos (List PouchDB.Document)
     | FetchVideos PouchDB.FetchVideosArgs
     | StartSearch
     | UpdateSearch String
@@ -134,9 +133,6 @@ update msg model =
         FetchVideos args ->
             ( model, PouchDB.fetchVideos args )
 
-        FetchedVideos videoDocuments ->
-            ( { model | playlistItems = videoDocuments }, Cmd.none )
-
         StartSearch ->
             let
                 searchCmd =
@@ -169,7 +165,7 @@ cmdOnNewLocation route =
         Nothing ->
             Cmd.none
         Just Route.Home ->
-            Cmd.none
+            Cmd.map VideosMsg Main.Pages.Videos.cmdOnPageLoad
         Just Route.Settings ->
             Cmd.none
 
@@ -212,7 +208,6 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ Youtube.Authorize.authorizedRedirectUri AuthorizedRedirectUri
-        , PouchDB.fetchedVideos FetchedVideos
         , PouchDB.Search.searchedVideos SearchedVideos
         , Sub.map VideosMsg <| Main.Pages.Videos.subscriptions model.videosPage
         ]
