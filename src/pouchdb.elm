@@ -3,7 +3,7 @@ port module PouchDB exposing (..)
 import Dict
 import Maybe
 import String exposing (padLeft)
-import Youtube.Playlist
+import Youtube.PlaylistItems
 
 
 type alias Thumbnail =
@@ -45,7 +45,7 @@ defaultVideosLimitArg = 20
 defaultFetchVideosArgs : FetchVideosArgs
 defaultFetchVideosArgs = { startKey = Nothing, endKey = Nothing, descending = False, limit = 20 }
 
-fromYoutubePlaylistItem : Youtube.Playlist.PlaylistItem -> Maybe Document
+fromYoutubePlaylistItem : Youtube.PlaylistItems.PlaylistItem -> Maybe Document
 fromYoutubePlaylistItem item =
     let
         fromSnippet snippet =
@@ -75,7 +75,7 @@ fromYoutubePlaylistItem item =
     in
         Maybe.map fromSnippet item.snippet
 
-fromYoutubePlaylistItems : List Youtube.Playlist.PlaylistItem -> List Document
+fromYoutubePlaylistItems : List Youtube.PlaylistItems.PlaylistItem -> List Document
 fromYoutubePlaylistItems items =
     let
         maybeToList x = case x of

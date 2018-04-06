@@ -1,4 +1,4 @@
-module Youtube.Playlist exposing (..)
+module Youtube.PlaylistItems exposing (..)
 
 import Http
 import Dict

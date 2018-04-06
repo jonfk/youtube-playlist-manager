@@ -9,7 +9,7 @@ import Navigation
 import PouchDB
 import PouchDB.Search
 import Youtube.Authorize exposing (parseTokenFromRedirectUri)
-import Youtube.Playlist exposing (Filter(..), Part(..), PlaylistItem, PlaylistItemListResponse)
+import Youtube.PlaylistItems exposing (Filter(..), Part(..), PlaylistItem, PlaylistItemListResponse)
 
 
 -- MODEL
@@ -192,7 +192,7 @@ fetchAllPlaylistItemsAndRefreshPage token resp =
 fetchNextPlaylistItems : String -> Maybe String -> Cmd Msg
 fetchNextPlaylistItems token nextPageToken =
     Http.send NewPlaylistItems <|
-        Youtube.Playlist.getPlaylistItems token [ IdPart, SnippetPart ] (PlaylistId "PLjcCiIbRzHcDHKqqcOghMQUFGv5wdE96F") (Just 10) Nothing nextPageToken Nothing
+        Youtube.PlaylistItems.getPlaylistItems token [ IdPart, SnippetPart ] (PlaylistId "PLjcCiIbRzHcDHKqqcOghMQUFGv5wdE96F") (Just 10) Nothing nextPageToken Nothing
 
 
 
