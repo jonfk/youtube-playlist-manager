@@ -43,10 +43,6 @@ build/pouchdb.quick-search.min.js:
 	mkdir -p build/
 	cp node_modules/pouchdb-quick-search/dist/pouchdb.quick-search.min.js build/
 
-build/bulma.css:
-	mkdir -p build/
-	cp node_modules/bulma/css/bulma.css build/
-
 .PHONY: tools
 tools: tools/compiler-20170626.tar.gz
 
