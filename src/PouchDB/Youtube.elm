@@ -22,7 +22,7 @@ port storeYoutubeData : YoutubeDataDoc -> Cmd msg
 port fetchYoutubeData : String -> Cmd msg
 
 
-port fetchedYoutubeData : (YoutubeDataDoc -> msg) -> Sub msg
+port fetchedYoutubeData : (Maybe YoutubeDataDoc -> msg) -> Sub msg
 
 
 port youtubeDataPortErr : (String -> msg) -> Sub msg

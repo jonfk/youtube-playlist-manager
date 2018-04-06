@@ -1,6 +1,8 @@
 module Main.State exposing (..)
 
 import Http
+import Main.Pages.Settings
+import Main.Pages.Videos
 import Main.Route as Route exposing (..)
 import Material
 import Navigation
@@ -8,8 +10,6 @@ import PouchDB
 import PouchDB.Search
 import Youtube.Authorize exposing (parseTokenFromRedirectUri)
 import Youtube.Playlist exposing (Filter(..), Part(..), PlaylistItem, PlaylistItemListResponse)
-import Main.Pages.Videos
-import Main.Pages.Settings
 
 
 -- MODEL
@@ -23,9 +23,8 @@ type ViewMode
 type alias Model =
     { location : Maybe Route.Route
     , mdl : Material.Model
-    , videosPage: Main.Pages.Videos.Model
-    , settingsPage: Main.Pages.Settings.Model
-
+    , videosPage : Main.Pages.Videos.Model
+    , settingsPage : Main.Pages.Settings.Model
     , viewMode : ViewMode
     , playlistItems : List PouchDB.Document
     , searchResults : List PouchDB.Document
@@ -45,13 +44,11 @@ type Msg
     | NavigateTo Navigation.Location
     | Mdl (Material.Msg Msg)
     | NewUrl String
-    | VideosMsg (Main.Pages.Videos.Msg)
-    | SettingsMsg (Main.Pages.Settings.Msg)
-    -- OLD
+    | VideosMsg Main.Pages.Videos.Msg
+    | SettingsMsg Main.Pages.Settings.Msg
+      -- OLD
     | FetchNewPlaylistItems
     | NewPlaylistItems (Result Http.Error PlaylistItemListResponse)
-    | AuthorizeYoutube Bool
-    | AuthorizedRedirectUri Navigation.Location
     | DeleteDatabase
     | FetchVideos PouchDB.FetchVideosArgs
     | StartSearch
@@ -91,8 +88,6 @@ update msg model =
             { model | settingsPage = subModel } ! [ Cmd.map SettingsMsg subCmd ]
 
         -- OLD
-
-
         FetchNewPlaylistItems ->
             let
                 mapfetch =
@@ -122,19 +117,6 @@ update msg model =
 
         NewPlaylistItems (Err httpErr) ->
             ( { model | err = Just httpErr }, Cmd.none )
-
-        AuthorizeYoutube interactive ->
-            ( model, Youtube.Authorize.authorize interactive )
-
-        AuthorizedRedirectUri redirectUri ->
-            let
-                a =
-                    Debug.log "redirectUri received" redirectUri
-
-                parsedToken =
-                    Debug.log "parsed token" <| parseTokenFromRedirectUri redirectUri
-            in
-            ( { model | token = parsedToken }, Cmd.none )
 
         DeleteDatabase ->
             ( model, PouchDB.deleteDatabase True )
@@ -173,10 +155,14 @@ cmdOnNewLocation route =
     case route of
         Nothing ->
             Cmd.none
+
         Just Route.Home ->
             Cmd.map VideosMsg Main.Pages.Videos.cmdOnPageLoad
+
         Just Route.Settings ->
             Cmd.map SettingsMsg Main.Pages.Settings.cmdOnPageLoad
+
+
 
 -- Playlist
 
@@ -216,8 +202,7 @@ fetchNextPlaylistItems token nextPageToken =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Youtube.Authorize.authorizedRedirectUri AuthorizedRedirectUri
-        , PouchDB.Search.searchedVideos SearchedVideos
+        [ PouchDB.Search.searchedVideos SearchedVideos
         , Sub.map VideosMsg <| Main.Pages.Videos.subscriptions model.videosPage
         , Sub.map SettingsMsg <| Main.Pages.Settings.subscriptions model.settingsPage
         ]

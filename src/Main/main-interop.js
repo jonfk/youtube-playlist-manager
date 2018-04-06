@@ -149,11 +149,12 @@ const YOUTUBE_DATA_DOC_ID = "YOUTUBE_DATA_DOC_ID";
 app.ports.storeYoutubeData.subscribe(function(youtubeDataDoc) {
     youtubeDataDoc['_id'] = YOUTUBE_DATA_DOC_ID;
     youtubeDataDoc.type = YOUTUBE_DATA_DOC_TYPE;
-    db.put(youtubeDataDoc).then(function() {
+    db.put(youtubeDataDoc, {force: true}).then(function() {
+        console.log("successfully saved youtubedata");
         // success
     }).catch(function(err) {
         console.log(err);
-        app.ports.youtubeDataPortErr.send(err);
+        app.ports.youtubeDataPortErr.send(JSON.stringify(err));
     });
 });
 
@@ -161,6 +162,11 @@ app.ports.fetchYoutubeData.subscribe(function() {
     db.get(YOUTUBE_DATA_DOC_ID).then(function(doc) {
         app.ports.fetchedYoutubeData.send(doc);
     }).catch(function(err) {
-        app.ports.youtubeDataPortErr.send(err);
+        console.log(err);
+        if (err.status === 404) {
+            app.ports.fetchedYoutubeData.send(null);
+        } else {
+            app.ports.youtubeDataPortErr.send(JSON.stringify(err));
+        }
     });
 });

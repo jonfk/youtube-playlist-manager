@@ -29,7 +29,7 @@ deep-clean: clean
 	rm -rf elm-stuff
 	rm -rf node_modules
 
-dependencies: build/bulma.css node_modules/pouchdb/dist/pouchdb.min.js build/pouchdb.min.js build/pouchdb.quick-search.min.js
+dependencies: node_modules/pouchdb/dist/pouchdb.min.js build/pouchdb.min.js build/pouchdb.quick-search.min.js
 
 # PouchDB
 node_modules/pouchdb/dist/pouchdb.min.js:
