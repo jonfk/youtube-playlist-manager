@@ -46,10 +46,14 @@ app.ports.authorize.subscribe(function(interactive) {
     });
 });
 
+const YOUTUBE_DATA_DOC_TYPE = "YOUTUBE_DATA_DOC_TYPE";
+const YOUTUBE_VIDEO_DOC_TYPE = "YOUTUBE_VIDEO_DOC_TYPE";
+
 // PouchDB
 app.ports.storeVideos.subscribe(function(documents) {
     documents.forEach(function(doc) {
         doc['_id'] = doc.id;
+        doc.type = YOUTUBE_VIDEO_DOC_TYPE;
     });
 
     db.bulkDocs(documents).then(function () {
@@ -65,6 +69,7 @@ app.ports.storeVideos.subscribe(function(documents) {
     });;
 });
 
+// TODO: filter by doc type. Maybe used mango queries: https://pouchdb.com/guides/mango-queries.html
 app.ports.fetchVideos.subscribe(function(args) {
     console.log(args);
     let allDocsArgs = {};
@@ -135,4 +140,27 @@ app.ports.searchVideos.subscribe(function(arg) {
                   }
                   app.ports.searchedVideos.send(docs);
               });
+});
+
+
+// PouchDB.Youtube ports
+
+const YOUTUBE_DATA_DOC_ID = "YOUTUBE_DATA_DOC_ID";
+app.ports.storeYoutubeData.subscribe(function(youtubeDataDoc) {
+    youtubeDataDoc['_id'] = YOUTUBE_DATA_DOC_ID;
+    youtubeDataDoc.type = YOUTUBE_DATA_DOC_TYPE;
+    db.put(youtubeDataDoc).then(function() {
+        // success
+    }).catch(function(err) {
+        console.log(err);
+        app.ports.youtubeDataPortErr.send(err);
+    });
+});
+
+app.ports.fetchYoutubeData.subscribe(function() {
+    db.get(YOUTUBE_DATA_DOC_ID).then(function(doc) {
+        app.ports.fetchedYoutubeData.send(doc);
+    }).catch(function(err) {
+        app.ports.youtubeDataPortErr.send(err);
+    });
 });
