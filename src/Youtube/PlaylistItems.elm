@@ -1,14 +1,12 @@
 module Youtube.PlaylistItems exposing (..)
 
-import Http
 import Dict
+import Http
+import Json.Decode exposing (Decoder, dict, float, int, list, nullable, string)
+import Json.Decode.Pipeline exposing (decode, optional, required)
 import List
 import Maybe
-import Json.Decode exposing (int, string, float, nullable, Decoder, dict, list)
-import Json.Decode.Pipeline exposing (decode, required, optional)
-
-type alias Token
-    = String
+import Youtube exposing (Token, tokenToHeader)
 
 
 type Part
@@ -17,70 +15,87 @@ type Part
     | SnippetPart
     | Status
 
+
 partToString : Part -> String
 partToString part =
     case part of
-        ContentDetails -> "contentDetails"
-        IdPart -> "id"
-        SnippetPart -> "snippet"
-        Status -> "status"
+        ContentDetails ->
+            "contentDetails"
+
+        IdPart ->
+            "id"
+
+        SnippetPart ->
+            "snippet"
+
+        Status ->
+            "status"
+
 
 partsToString : List Part -> String
 partsToString parts =
     String.concat <| List.intersperse "," (List.map partToString parts)
 
+
 type Filter
     = IdFilter (List String)
     | PlaylistId String
 
+
 filterToParam : Filter -> String
 filterToParam filter =
     let
-        idFiltersToString ids = String.concat <| List.intersperse "," ids
+        idFiltersToString ids =
+            String.concat <| List.intersperse "," ids
     in
-        case filter of
-            IdFilter ids -> "id=" ++ (idFiltersToString ids)
-            PlaylistId id -> "playlistId=" ++ id
+    case filter of
+        IdFilter ids ->
+            "id=" ++ idFiltersToString ids
 
-type alias MaxResults
-    = Maybe Int
-
-
-type alias OnBehalfOfContentOwner
-    = Maybe String
+        PlaylistId id ->
+            "playlistId=" ++ id
 
 
-type alias PageToken
-    = Maybe String
+type alias MaxResults =
+    Maybe Int
 
-tokenToHeader : Token -> Http.Header
-tokenToHeader token =
-    let
-        bearer = "Bearer " ++ token
-    in
-    Http.header "Authorization" bearer
 
-type alias VideoId
-    = Maybe String
+type alias OnBehalfOfContentOwner =
+    Maybe String
+
+
+type alias PageToken =
+    Maybe String
+
+
+type alias VideoId =
+    Maybe String
+
 
 buildUrl : List Part -> Filter -> MaxResults -> OnBehalfOfContentOwner -> PageToken -> VideoId -> String
 buildUrl parts filter maxResults onBehalfOfContentOwner pageToken videoId =
     let
         maxResultsParam =
-            Maybe.withDefault "" <| Maybe.map (\x -> "&maxResults=" ++ (toString x)) maxResults
+            Maybe.withDefault "" <| Maybe.map (\x -> "&maxResults=" ++ toString x) maxResults
+
         onBehalfOfContentOwnerParam =
             Maybe.withDefault "" <| Maybe.map (\x -> "&onBehalfOfContentOwner=" ++ x) onBehalfOfContentOwner
+
         pageTokenParam =
             Maybe.withDefault "" <| Maybe.map (\x -> "&pageToken=" ++ x) pageToken
+
         videoIdParam =
             Maybe.withDefault "" <| Maybe.map (\x -> "&videoId=" ++ x) videoId
     in
-        "https://www.googleapis.com/youtube/v3/playlistItems?" ++ "part=" ++ (partsToString parts) ++
-            "&" ++ (filterToParam filter) ++
-            maxResultsParam ++
-            onBehalfOfContentOwnerParam ++
-            pageTokenParam ++
-            videoIdParam
+    "https://www.googleapis.com/youtube/v3/playlistItems?"
+        ++ "part="
+        ++ partsToString parts
+        ++ "&"
+        ++ filterToParam filter
+        ++ maxResultsParam
+        ++ onBehalfOfContentOwnerParam
+        ++ pageTokenParam
+        ++ videoIdParam
 
 
 getPlaylistItems : Token -> List Part -> Filter -> MaxResults -> OnBehalfOfContentOwner -> PageToken -> VideoId -> Http.Request PlaylistItemListResponse
@@ -88,8 +103,8 @@ getPlaylistItems token parts filter maxResults onBehalfOfContentOwner pageToken 
     Http.request
         { method = "GET"
         , headers =
-              [ tokenToHeader token
-              ]
+            [ tokenToHeader token
+            ]
         , url = buildUrl parts filter maxResults onBehalfOfContentOwner pageToken videoId
         , body = Http.emptyBody
         , expect = Http.expectJson playlistItemListResponseDecoder
@@ -107,10 +122,12 @@ type alias PlaylistItemListResponse =
     , items : List PlaylistItem
     }
 
+
 type alias PageInfo =
     { totalResults : Int
     , resultsPerPage : Int
     }
+
 
 type alias PlaylistItem =
     { kind : String
@@ -119,10 +136,12 @@ type alias PlaylistItem =
     , snippet : Maybe Snippet
     }
 
+
 type alias ResourceId =
     { kind : String
     , videoId : String
     }
+
 
 type alias Snippet =
     { publishedAt : String
@@ -136,11 +155,13 @@ type alias Snippet =
     , resourceId : ResourceId
     }
 
+
 type alias Thumbnail =
     { url : String
     , width : Int
     , height : Int
     }
+
 
 playlistItemListResponseDecoder : Decoder PlaylistItemListResponse
 playlistItemListResponseDecoder =
@@ -152,11 +173,13 @@ playlistItemListResponseDecoder =
         |> required "pageInfo" pageInfoDecoder
         |> required "items" (list playlistItemDecoder)
 
+
 pageInfoDecoder : Decoder PageInfo
 pageInfoDecoder =
     decode PageInfo
         |> required "totalResults" int
         |> required "resultsPerPage" int
+
 
 playlistItemDecoder : Decoder PlaylistItem
 playlistItemDecoder =
@@ -180,11 +203,13 @@ snippetDecoder =
         |> required "thumbnails" (dict thumbnailDecoder)
         |> required "resourceId" resourceIdDecoder
 
+
 resourceIdDecoder : Decoder ResourceId
 resourceIdDecoder =
     decode ResourceId
         |> required "kind" string
         |> required "videoId" string
+
 
 thumbnailDecoder : Decoder Thumbnail
 thumbnailDecoder =
@@ -194,9 +219,10 @@ thumbnailDecoder =
         |> required "height" int
 
 
-test = Json.Decode.decodeString
-       playlistItemListResponseDecoder
-       """{
+test =
+    Json.Decode.decodeString
+        playlistItemListResponseDecoder
+        """{
     "kind": "youtube#playlistItemListResponse",
     "etag": "\\"m2yskBQFythfE4irbTIeOgYYfBU/9AVqzq--edMVetJiYD1gASozev4\\"",
     "nextPageToken": "CDIQAA",
