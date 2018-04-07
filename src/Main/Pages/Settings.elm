@@ -14,7 +14,7 @@ import Youtube.Authorize
 
 type alias Model =
     { mdl : Material.Model
-    , token : Maybe String
+    , youtubeData : Maybe PouchDB.Youtube.YoutubeDataDoc
     , error : Maybe String
     }
 
@@ -33,7 +33,7 @@ type Msg
 initialModel : Model
 initialModel =
     { mdl = Material.model
-    , token = Nothing
+    , youtubeData = Nothing
     , error = Nothing
     }
 
@@ -74,7 +74,7 @@ viewSettingsActionsList model =
             ]
 
         signInOrToken =
-            Maybe.map tokenView model.token |> Maybe.withDefault signInButton
+            Maybe.andThen .token model.youtubeData |> Maybe.map tokenView |> Maybe.withDefault signInButton
     in
     Lists.ul []
         [ Lists.li []
@@ -111,17 +111,31 @@ update msg model =
 
                 parsedToken =
                     Debug.log "parsed token" <| Youtube.Authorize.parseTokenFromRedirectUri redirectUri
+
+                youtubeData =
+                    PouchDB.Youtube.unwrap model.youtubeData
+
+                newYoutubeData =
+                    { youtubeData | token = parsedToken }
             in
-            { model | token = parsedToken } ! [ PouchDB.Youtube.storeYoutubeData { token = parsedToken } ]
+            { model | youtubeData = Just newYoutubeData } ! [ PouchDB.Youtube.storeYoutubeData newYoutubeData ]
 
         DeleteYoutubeToken ->
-            { model | token = Nothing } ! [ PouchDB.Youtube.storeYoutubeData { token = Nothing } ]
+            let
+                ytData =
+                    PouchDB.Youtube.unwrap model.youtubeData
+
+                newYoutubeData =
+                    { ytData | token = Nothing }
+            in
+            { model | youtubeData = Just newYoutubeData } ! [ PouchDB.Youtube.storeYoutubeData newYoutubeData ]
 
         FetchedYoutubeData ytDataDoc ->
-            ( { model | token = Maybe.andThen .token ytDataDoc }, Cmd.none )
+            ( { model | youtubeData = ytDataDoc }, Cmd.none )
 
         PouchDBError error ->
-            {model | error = Just error} ! []
+            { model | error = Just error } ! []
+
         DismissError ->
             { model | error = Nothing } ! []
 

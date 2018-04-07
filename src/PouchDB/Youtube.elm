@@ -1,11 +1,21 @@
 port module PouchDB.Youtube exposing (..)
 
-import Date
-
 
 type alias YoutubeDataDoc =
-    { token : Maybe String
+    { rev : String
+    , token : Maybe String
     }
+
+
+defaultYoutubeDataDoc : YoutubeDataDoc
+defaultYoutubeDataDoc =
+    { rev = ""
+    , token = Nothing
+    }
+
+unwrap : Maybe YoutubeDataDoc -> YoutubeDataDoc
+unwrap doc =
+    Maybe.withDefault defaultYoutubeDataDoc doc
 
 
 type alias YoutubePlaylistDoc =
