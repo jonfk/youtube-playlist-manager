@@ -1,5 +1,6 @@
 module Youtube.Playlist exposing (..)
 
+import Dict
 import Http
 import Json.Decode
 import Json.Decode.Pipeline
@@ -31,8 +32,8 @@ type alias OptionalParams =
     }
 
 
-getPlaylist : Token -> List Part -> Filter -> Maybe OptionalParams -> Http.Request YoutubePlaylistsListResponse
-getPlaylist token parts filter optionalParams =
+getPlaylists : Token -> List Part -> Filter -> Maybe OptionalParams -> Http.Request YoutubePlaylistsListResponse
+getPlaylists token parts filter optionalParams =
     Http.request
         { method = "GET"
         , headers =
@@ -48,7 +49,7 @@ getPlaylist token parts filter optionalParams =
 
 buildUrl : List Part -> Filter -> Maybe OptionalParams -> String
 buildUrl parts filter optionalParams =
-    "https://www.googleapis.com/youtube/v3/playlistItems?"
+    "https://www.googleapis.com/youtube/v3/playlists?"
         ++ partsToParam parts
         ++ "&"
         ++ filterToParam filter
@@ -57,7 +58,7 @@ buildUrl parts filter optionalParams =
 
 partsToParam : List Part -> String
 partsToParam parts =
-    String.concat <| List.intersperse "," (List.map partToString parts)
+    "part=" ++ (String.concat <| List.intersperse "," (List.map partToString parts))
 
 
 partToString : Part -> String
@@ -84,10 +85,6 @@ partToString part =
 
 filterToParam : Filter -> String
 filterToParam filter =
-    let
-        idFiltersToString ids =
-            String.concat <| List.intersperse "," ids
-    in
     case filter of
         ChannelId channelId ->
             "channelId=" ++ channelId
@@ -96,7 +93,7 @@ filterToParam filter =
             "id=" ++ id
 
         Mine mine ->
-            "mine=" ++ toString mine
+            "mine=" ++ (String.toLower <| toString mine)
 
 
 optionalParamsToParams : Maybe OptionalParams -> String
@@ -104,6 +101,7 @@ optionalParamsToParams optionalParams =
     let
         optParamToParam paramKey param =
             Maybe.withDefault "" <| Maybe.map (\x -> "&" ++ paramKey ++ "=" ++ x) param
+
         intOptParamToParam paramKey param =
             Maybe.withDefault "" <| Maybe.map (\x -> "&" ++ paramKey ++ "=" ++ toString x) param
     in
@@ -122,7 +120,7 @@ optionalParamsToParams optionalParams =
 type alias YoutubePlaylistsListResponse =
     { kind : String
     , etag : String
-    , nextPageToken : String
+    , nextPageToken : Maybe String
     , pageInfo : YoutubePlaylistsListResponsePageInfo
     , items : List YoutubePlaylist
     }
@@ -170,7 +168,7 @@ type alias YoutubePlaylistSnippet =
     , channelId : String
     , title : String
     , description : String
-    , thumbnails : YoutubePlaylistSnippetThumbnails
+    , thumbnails : Dict.Dict String YoutubePlaylistSnippetThumbnail
     , channelTitle : String
     , localized : YoutubePlaylistSnippetLocalized
     }
@@ -223,7 +221,8 @@ decodeYoutubePlaylistSnippet =
         |> Json.Decode.Pipeline.required "channelId" Json.Decode.string
         |> Json.Decode.Pipeline.required "title" Json.Decode.string
         |> Json.Decode.Pipeline.required "description" Json.Decode.string
-        |> Json.Decode.Pipeline.required "thumbnails" decodeYoutubePlaylistSnippetThumbnails
+        |> Json.Decode.Pipeline.required "thumbnails" (Json.Decode.dict decodeYoutubePlaylistSnippetThumbnail)
+        --decodeYoutubePlaylistSnippetThumbnails
         |> Json.Decode.Pipeline.required "channelTitle" Json.Decode.string
         |> Json.Decode.Pipeline.required "localized" decodeYoutubePlaylistSnippetLocalized
 
@@ -234,71 +233,12 @@ decodeYoutubePlaylistContentDetails =
         |> Json.Decode.Pipeline.required "itemCount" Json.Decode.int
 
 
-encodeYoutubePlaylist : YoutubePlaylist -> Json.Encode.Value
-encodeYoutubePlaylist record =
-    Json.Encode.object
-        [ ( "kind", Json.Encode.string <| record.kind )
-        , ( "etag", Json.Encode.string <| record.etag )
-        , ( "id", Json.Encode.string <| record.id )
-        , ( "snippet", encodeYoutubePlaylistSnippet <| record.snippet )
-        , ( "contentDetails", encodeYoutubePlaylistContentDetails <| record.contentDetails )
-        ]
-
-
-encodeYoutubePlaylistSnippetThumbnail : YoutubePlaylistSnippetThumbnail -> Json.Encode.Value
-encodeYoutubePlaylistSnippetThumbnail record =
-    Json.Encode.object
-        [ ( "url", Json.Encode.string <| record.url )
-        , ( "width", Json.Encode.int <| record.width )
-        , ( "height", Json.Encode.int <| record.height )
-        ]
-
-
-encodeYoutubePlaylistSnippetThumbnails : YoutubePlaylistSnippetThumbnails -> Json.Encode.Value
-encodeYoutubePlaylistSnippetThumbnails record =
-    Json.Encode.object
-        [ ( "default", encodeYoutubePlaylistSnippetThumbnail <| record.default )
-        , ( "medium", encodeYoutubePlaylistSnippetThumbnail <| record.medium )
-        , ( "high", encodeYoutubePlaylistSnippetThumbnail <| record.high )
-        , ( "standard", encodeYoutubePlaylistSnippetThumbnail <| record.standard )
-        , ( "maxres", encodeYoutubePlaylistSnippetThumbnail <| record.maxres )
-        ]
-
-
-encodeYoutubePlaylistSnippetLocalized : YoutubePlaylistSnippetLocalized -> Json.Encode.Value
-encodeYoutubePlaylistSnippetLocalized record =
-    Json.Encode.object
-        [ ( "title", Json.Encode.string <| record.title )
-        , ( "description", Json.Encode.string <| record.description )
-        ]
-
-
-encodeYoutubePlaylistSnippet : YoutubePlaylistSnippet -> Json.Encode.Value
-encodeYoutubePlaylistSnippet record =
-    Json.Encode.object
-        [ ( "publishedAt", Json.Encode.string <| record.publishedAt )
-        , ( "channelId", Json.Encode.string <| record.channelId )
-        , ( "title", Json.Encode.string <| record.title )
-        , ( "description", Json.Encode.string <| record.description )
-        , ( "thumbnails", encodeYoutubePlaylistSnippetThumbnails <| record.thumbnails )
-        , ( "channelTitle", Json.Encode.string <| record.channelTitle )
-        , ( "localized", encodeYoutubePlaylistSnippetLocalized <| record.localized )
-        ]
-
-
-encodeYoutubePlaylistContentDetails : YoutubePlaylistContentDetails -> Json.Encode.Value
-encodeYoutubePlaylistContentDetails record =
-    Json.Encode.object
-        [ ( "itemCount", Json.Encode.int <| record.itemCount )
-        ]
-
-
 decodeYoutubePlaylistsListResponse : Json.Decode.Decoder YoutubePlaylistsListResponse
 decodeYoutubePlaylistsListResponse =
     Json.Decode.Pipeline.decode YoutubePlaylistsListResponse
         |> Json.Decode.Pipeline.required "kind" Json.Decode.string
         |> Json.Decode.Pipeline.required "etag" Json.Decode.string
-        |> Json.Decode.Pipeline.required "nextPageToken" Json.Decode.string
+        |> Json.Decode.Pipeline.optional "nextPageToken" (Json.Decode.nullable Json.Decode.string) Nothing
         |> Json.Decode.Pipeline.required "pageInfo" decodeYoutubePlaylistsListResponsePageInfo
         |> Json.Decode.Pipeline.required "items" (Json.Decode.list decodeYoutubePlaylist)
 
@@ -308,22 +248,3 @@ decodeYoutubePlaylistsListResponsePageInfo =
     Json.Decode.Pipeline.decode YoutubePlaylistsListResponsePageInfo
         |> Json.Decode.Pipeline.required "totalResults" Json.Decode.int
         |> Json.Decode.Pipeline.required "resultsPerPage" Json.Decode.int
-
-
-encodeYoutubePlaylistsListResponse : YoutubePlaylistsListResponse -> Json.Encode.Value
-encodeYoutubePlaylistsListResponse record =
-    Json.Encode.object
-        [ ( "kind", Json.Encode.string <| record.kind )
-        , ( "etag", Json.Encode.string <| record.etag )
-        , ( "nextPageToken", Json.Encode.string <| record.nextPageToken )
-        , ( "pageInfo", encodeYoutubePlaylistsListResponsePageInfo <| record.pageInfo )
-        , ( "items", Json.Encode.list <| List.map encodeYoutubePlaylist <| record.items )
-        ]
-
-
-encodeYoutubePlaylistsListResponsePageInfo : YoutubePlaylistsListResponsePageInfo -> Json.Encode.Value
-encodeYoutubePlaylistsListResponsePageInfo record =
-    Json.Encode.object
-        [ ( "totalResults", Json.Encode.int <| record.totalResults )
-        , ( "resultsPerPage", Json.Encode.int <| record.resultsPerPage )
-        ]

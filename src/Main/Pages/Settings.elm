@@ -1,6 +1,7 @@
 module Main.Pages.Settings exposing (..)
 
 import Html exposing (Html, div, text)
+import Main.Components.YoutubePlaylists
 import Main.View.ErrorCard
 import Material
 import Material.Button as Button
@@ -16,6 +17,7 @@ type alias Model =
     { mdl : Material.Model
     , youtubeData : Maybe PouchDB.Youtube.YoutubeDataDoc
     , error : Maybe String
+    , ytPlaylistsComp : Main.Components.YoutubePlaylists.Model
     }
 
 
@@ -28,6 +30,7 @@ type Msg
     | DeleteYoutubeToken
     | PouchDBError String
     | DismissError
+    | YTPlaylistsComponentMsg Main.Components.YoutubePlaylists.Msg
 
 
 initialModel : Model
@@ -35,15 +38,21 @@ initialModel =
     { mdl = Material.model
     , youtubeData = Nothing
     , error = Nothing
+    , ytPlaylistsComp = Main.Components.YoutubePlaylists.initialModel
     }
 
 
 view : Model -> Html Msg
 view model =
+    let
+        token =
+            Maybe.andThen .token model.youtubeData
+    in
     div []
         [ text "Settings Page"
         , Main.View.ErrorCard.view model.mdl model.error DismissError Mdl
         , viewSettingsActionsList model
+        , Main.Components.YoutubePlaylists.view token model.ytPlaylistsComp |> Html.map YTPlaylistsComponentMsg
         , text <| toString model
         ]
 
@@ -94,6 +103,10 @@ viewSettingsActionsList model =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
+    let
+        token =
+            Maybe.andThen .token model.youtubeData
+    in
     case msg of
         NoOp ->
             model ! []
@@ -138,6 +151,13 @@ update msg model =
 
         DismissError ->
             { model | error = Nothing } ! []
+
+        YTPlaylistsComponentMsg subMsg ->
+            let
+                ( subModel, subCmd ) =
+                    Main.Components.YoutubePlaylists.update token subMsg model.ytPlaylistsComp
+            in
+            { model | ytPlaylistsComp = subModel } ! [ Cmd.map YTPlaylistsComponentMsg subCmd ]
 
 
 subscriptions : Model -> Sub Msg
