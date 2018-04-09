@@ -29,7 +29,7 @@ type alias YoutubePlaylistDoc =
 port storeYoutubeData : YoutubeDataDoc -> Cmd msg
 
 
-port fetchYoutubeData : String -> Cmd msg
+port fetchYoutubeData : () -> Cmd msg
 
 
 port fetchedYoutubeData : (Maybe YoutubeDataDoc -> msg) -> Sub msg

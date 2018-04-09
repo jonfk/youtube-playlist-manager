@@ -171,4 +171,4 @@ subscriptions model =
 
 cmdOnPageLoad : Cmd Msg
 cmdOnPageLoad =
-    PouchDB.Youtube.fetchYoutubeData ""
+    PouchDB.Youtube.fetchYoutubeData ()
