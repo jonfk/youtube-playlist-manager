@@ -1,4 +1,3 @@
-
 // DB Stuff
 var db = new PouchDB('youtube-manager');
 
@@ -22,11 +21,11 @@ var redirectUri = chrome.identity.getRedirectURL();
 let clientId = "1022327474530-ij2unslv94d4hjcrdh4toijljd17kt4g.apps.googleusercontent.com";
 let scope = "https://www.googleapis.com/auth/youtube.readonly";
 let uri = 'https://accounts.google.com/o/oauth2/v2/auth?client_id=' +
-        encodeURIComponent(clientId) +
-        '&response_type=token&scope=' +
-        encodeURIComponent(scope) +
-        '&include_granted_scopes=true&state=state_parameter_passthrough' +
-        '&redirect_uri=' + encodeURIComponent(redirectUri);
+    encodeURIComponent(clientId) +
+    '&response_type=token&scope=' +
+    encodeURIComponent(scope) +
+    '&include_granted_scopes=true&state=state_parameter_passthrough' +
+    '&redirect_uri=' + encodeURIComponent(redirectUri);
 
 app.ports.authorize.subscribe(function(interactive) {
     chrome.identity.launchWebAuthFlow({
@@ -48,6 +47,13 @@ app.ports.authorize.subscribe(function(interactive) {
 
 const YOUTUBE_DATA_DOC_TYPE = "YOUTUBE_DATA_DOC_TYPE";
 const YOUTUBE_VIDEO_DOC_TYPE = "YOUTUBE_VIDEO_DOC_TYPE";
+const YOUTUBE_PLAYLIST_DOC_TYPE = "YOUTUBE_PLAYLIST_DOC_TYPE";
+
+db.createIndex({
+    index: {
+        fields: ['type']
+    }
+});
 
 // PouchDB
 app.ports.storeVideos.subscribe(function(documents) {
@@ -56,9 +62,9 @@ app.ports.storeVideos.subscribe(function(documents) {
         doc.type = YOUTUBE_VIDEO_DOC_TYPE;
     });
 
-    db.bulkDocs(documents).then(function () {
+    db.bulkDocs(documents).then(function() {
         // success
-    }).catch(function (err) {
+    }).catch(function(err) {
         if (err.name === 'conflict') {
             console.log('storeVideos conflict error');
             console.log(err);
@@ -120,26 +126,27 @@ let searchableFields = ['video.title', 'video.description', 'tags', 'notes'];
 db.search({
     fields: searchableFields,
     build: true
-}).then(function (info) {
+}).then(function(info) {
     console.log('search index build successfully');
     console.log(info);
-}).catch(function (err) {
+}).catch(function(err) {
     console.log('search index build failure');
     console.log(err);
 });
 
 app.ports.searchVideos.subscribe(function(arg) {
-    db.search({ query : arg
-                , fields : searchableFields
-                , include_docs: true
-                , mm: '100%'
-              }).then(function(result) {
-                  let docs = [];
-                  for (let i = 0; i < result.rows.length; i++) {
-                      docs.push(result.rows[i].doc);
-                  }
-                  app.ports.searchedVideos.send(docs);
-              });
+    db.search({
+        query: arg,
+        fields: searchableFields,
+        include_docs: true,
+        mm: '100%'
+    }).then(function(result) {
+        let docs = [];
+        for (let i = 0; i < result.rows.length; i++) {
+            docs.push(result.rows[i].doc);
+        }
+        app.ports.searchedVideos.send(docs);
+    });
 });
 
 
@@ -151,7 +158,9 @@ app.ports.storeYoutubeData.subscribe(function(youtubeDataDoc) {
     youtubeDataDoc.type = YOUTUBE_DATA_DOC_TYPE;
     youtubeDataDoc['_rev'] = youtubeDataDoc.rev;
 
-    db.put(youtubeDataDoc, {force: true}).then(function() {
+    db.put(youtubeDataDoc, {
+        force: true
+    }).then(function() {
         console.log("successfully saved youtubedata");
         // success
         fetchYoutubeDataDoc();
@@ -178,3 +187,40 @@ function fetchYoutubeDataDoc() {
         }
     });
 }
+
+// PouchDB.Playlists ports
+
+
+function sendPlaylistPortError(err) {
+    app.ports.playlistsErr.send(JSON.stringify(err));
+}
+
+app.ports.storePlaylist.subscribe(function(ytPlaylist) {
+    ytPlaylist['_id'] = ytPlaylist.id;
+    ytPlaylist['_rev'] = ytPlaylist.rev;
+    ytPlaylist.type = YOUTUBE_PLAYLIST_DOC_TYPE;
+
+    db.put(ytPlaylist, {
+        force: true
+    }).then(function() {
+        //success
+    }).catch(function(err) {
+        sendPlaylistPortError(err);
+    });
+});
+
+app.ports.fetchAllPlaylists.subscribe(function() {
+
+    db.find({
+        selector: {
+            type: {
+                $eq: YOUTUBE_PLAYLIST_DOC_TYPE
+            }
+        }
+    }).then(function(docs) {
+        app.ports.fetchedAllPlaylists.send(docs);
+    }).catch(function(err) {
+        sendPlaylistPortError(err);
+    });
+
+});

@@ -10,6 +10,7 @@ import Material.Button as Button
 import Material.Options as Options
 import Youtube.Playlist as YTPlaylists
 import Maybe.Extra
+import PouchDB.Playlists
 
 
 type alias Model =
