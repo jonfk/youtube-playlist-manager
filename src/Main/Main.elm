@@ -49,8 +49,7 @@ initWithFlags flags location =
 
 
 type alias Flags =
-    { extensionId : String
-    }
+    {}
 
 
 
