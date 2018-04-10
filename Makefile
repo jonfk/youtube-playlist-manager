@@ -29,7 +29,7 @@ deep-clean: clean
 	rm -rf elm-stuff
 	rm -rf node_modules
 
-dependencies: node_modules/pouchdb/dist/pouchdb.min.js build/pouchdb.min.js build/pouchdb.quick-search.min.js
+dependencies: node_modules/pouchdb/dist/pouchdb.min.js build/pouchdb.min.js build/pouchdb.quick-search.min.js build/pouchdb.find.js
 
 # PouchDB
 node_modules/pouchdb/dist/pouchdb.min.js:
@@ -42,6 +42,10 @@ build/pouchdb.min.js: node_modules/pouchdb/dist/pouchdb.min.js
 build/pouchdb.quick-search.min.js:
 	mkdir -p build/
 	cp node_modules/pouchdb-quick-search/dist/pouchdb.quick-search.min.js build/
+
+build/pouchdb.find.js:
+	mkdir -p build/
+	cp node_modules/pouchdb/dist/pouchdb.find.js build/pouchdb.find.js
 
 .PHONY: tools
 tools: tools/compiler-20170626.tar.gz
