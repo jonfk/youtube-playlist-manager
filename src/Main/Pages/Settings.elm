@@ -166,9 +166,13 @@ subscriptions model =
         [ Youtube.Authorize.authorizedRedirectUri AuthorizedRedirectUri
         , PouchDB.Youtube.fetchedYoutubeData FetchedYoutubeData
         , PouchDB.Youtube.youtubeDataPortErr PouchDBError
+        , Sub.map YTPlaylistsComponentMsg <| Main.Components.YoutubePlaylists.subscriptions model.ytPlaylistsComp
         ]
 
 
 cmdOnPageLoad : Cmd Msg
 cmdOnPageLoad =
-    PouchDB.Youtube.fetchYoutubeData ()
+    Cmd.batch
+        [ PouchDB.Youtube.fetchYoutubeData ()
+        , Cmd.map YTPlaylistsComponentMsg Main.Components.YoutubePlaylists.cmdOnLoad
+        ]

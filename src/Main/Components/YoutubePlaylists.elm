@@ -1,5 +1,6 @@
 module Main.Components.YoutubePlaylists exposing (..)
 
+import Dict
 import Html exposing (Html, button, div, text)
 import Http
 import Main.Errors as Errors
@@ -8,14 +9,15 @@ import Main.View.YoutubePlaylistsTable as YoutubePlaylistsTable
 import Material
 import Material.Button as Button
 import Material.Options as Options
-import Youtube.Playlist as YTPlaylists
 import Maybe.Extra
-import PouchDB.Playlists
+import PouchDB.Playlists as DBPlaylists
+import Youtube.Playlist as YTPlaylists
 
 
 type alias Model =
     { mdl : Material.Model
     , allYoutubePlaylists : List YTPlaylists.YoutubePlaylist
+    , selectedPlaylists : Dict.Dict String DBPlaylists.Doc
     , error : Maybe String
     }
 
@@ -25,15 +27,25 @@ type Msg
     | Mdl (Material.Msg Msg)
     | FetchedPlaylistsListResp (Result Http.Error YTPlaylists.YoutubePlaylistsListResponse)
     | FetchAllPlaylists
+    | TogglePlaylist YTPlaylists.YoutubePlaylist
     | DismissError
+    | FetchedDBPlaylist DBPlaylists.Doc
+    | FetchedDBPlaylists (List DBPlaylists.Doc)
+    | DBPlaylistsErr String
 
 
 initialModel : Model
 initialModel =
     { mdl = Material.model
     , allYoutubePlaylists = []
+    , selectedPlaylists = Dict.empty
     , error = Nothing
     }
+
+
+selectedPlaylist : Model -> String -> Bool
+selectedPlaylist model id =
+    Dict.member id model.selectedPlaylists
 
 
 view : Maybe String -> Model -> Html Msg
@@ -42,8 +54,9 @@ view token model =
         [ text "Playlists Component"
         , ErrorCard.view model.mdl model.error DismissError Mdl
         , viewFetchPlaylistsButton token model
-        , YoutubePlaylistsTable.view model.allYoutubePlaylists
+        , YoutubePlaylistsTable.view model.allYoutubePlaylists (selectedPlaylist model) model.mdl Mdl TogglePlaylist
         ]
+
 
 viewFetchPlaylistsButton : Maybe String -> Model -> Html Msg
 viewFetchPlaylistsButton token model =
@@ -86,18 +99,53 @@ update token msg model =
 
         FetchAllPlaylists ->
             let
-                fetchCmd = Maybe.map (\tkn -> fetchPlaylists tkn Nothing) token
+                fetchCmd =
+                    Maybe.map (\tkn -> fetchPlaylists tkn Nothing) token
             in
-            model ! [Maybe.withDefault Cmd.none fetchCmd]
+            model ! [ Maybe.withDefault Cmd.none fetchCmd ]
 
         DismissError ->
             { model | error = Nothing } ! []
+
+        TogglePlaylist playlist ->
+            let
+                ( cmd, newSelectedPlaylists ) =
+                    if not <| selectedPlaylist model playlist.id then
+                        ( DBPlaylists.storePlaylist { id = playlist.id, rev = Nothing, title = playlist.snippet.title }
+                        , model.selectedPlaylists
+                        )
+                    else
+                        ( Dict.get playlist.id model.selectedPlaylists |> Maybe.map DBPlaylists.removePlaylist |> Maybe.withDefault Cmd.none
+                        , Dict.remove playlist.id model.selectedPlaylists
+                        )
+            in
+            { model | selectedPlaylists = newSelectedPlaylists } ! [ cmd ]
+
+        FetchedDBPlaylist playlistDoc ->
+            let
+                newSelectedPlaylists =
+                    Dict.insert playlistDoc.id playlistDoc model.selectedPlaylists
+            in
+            { model | selectedPlaylists = Debug.log "selected playlists " newSelectedPlaylists } ! []
+
+        FetchedDBPlaylists playlists ->
+            let
+                selectedPlaylists =
+                    List.map (\playlist -> ( playlist.id, playlist )) playlists |> Dict.fromList
+            in
+            { model | selectedPlaylists = selectedPlaylists } ! []
+
+        DBPlaylistsErr err ->
+            { model | error = Just err } ! []
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        []
+        [ DBPlaylists.fetchedPlaylist FetchedDBPlaylist
+        , DBPlaylists.fetchedAllPlaylists FetchedDBPlaylists
+        , DBPlaylists.playlistsErr DBPlaylistsErr
+        ]
 
 
 fetchPlaylists : String -> Maybe String -> Cmd Msg
@@ -116,6 +164,6 @@ fetchPlaylists token nextPageToken =
             )
 
 
-cmdOnLoad : Maybe String -> Cmd Msg
-cmdOnLoad token =
-    Cmd.none
+cmdOnLoad : Cmd Msg
+cmdOnLoad =
+    DBPlaylists.fetchAllPlaylists ()
