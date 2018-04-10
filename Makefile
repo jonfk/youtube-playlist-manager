@@ -1,7 +1,10 @@
 
 .PHONY: package-elm clean deep-clean dependencies
 
-package: dependencies temp_build/main.js src/main/main-interop.js src/popup/popup-interop.js
+JS_FILES = $(shell find src -type f -name '*.js')
+ELM_FILES = $(shell find src -type f -name '*.elm')
+
+package: dependencies temp_build/main.js $(JS_FILES) config/manifest.json style/style.css
 	mkdir -p build/main build/popup
 	cp temp_build/main.js build/main/main.js
 
@@ -15,11 +18,8 @@ package: dependencies temp_build/main.js src/main/main-interop.js src/popup/popu
 	cp config/manifest.json build/
 	@echo successfully packaged elm generated files and js files
 
-temp_build/main.js: src/Main/Main.elm
+temp_build/main.js: $(ELM_FILES)
 	elm-make src/Main/Main.elm --output temp_build/main.js
-
-temp_build/youtube/playlist.js: src/Youtube/Playlist.elm
-	elm-make src/Youtube/Playlist.elm --output temp_build/youtube/playlist.js
 
 clean:
 	rm -rf temp_build
@@ -32,18 +32,18 @@ deep-clean: clean
 dependencies: node_modules/pouchdb/dist/pouchdb.min.js build/pouchdb.min.js build/pouchdb.quick-search.min.js build/pouchdb.find.js
 
 # PouchDB
-node_modules/pouchdb/dist/pouchdb.min.js:
+node_modules:
 	npm install
 
 build/pouchdb.min.js: node_modules/pouchdb/dist/pouchdb.min.js
 	mkdir -p build/
 	cp node_modules/pouchdb/dist/pouchdb.min.js build/
 
-build/pouchdb.quick-search.min.js:
+build/pouchdb.quick-search.min.js: node_modules/pouchdb-quick-search/dist/pouchdb.quick-search.min.js
 	mkdir -p build/
 	cp node_modules/pouchdb-quick-search/dist/pouchdb.quick-search.min.js build/
 
-build/pouchdb.find.js:
+build/pouchdb.find.js: node_modules/pouchdb/dist/pouchdb.find.js
 	mkdir -p build/
 	cp node_modules/pouchdb/dist/pouchdb.find.js build/pouchdb.find.js
 
