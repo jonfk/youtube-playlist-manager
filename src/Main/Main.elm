@@ -1,9 +1,6 @@
 module Main exposing (..)
 
 import Html exposing (Html, button, div, h2, text)
-import Html.Attributes exposing (class, classList)
-import Html.Events exposing (onClick)
-import Json.Decode
 import Main.Pages.Settings
 import Main.Pages.Videos
 import Main.Route as Route
@@ -17,7 +14,6 @@ import Material.Options as Options exposing (cs, css, when)
 import Material.Scheme
 import Maybe
 import Navigation
-import PouchDB
 
 
 main : Program Flags Model Msg
@@ -36,15 +32,8 @@ initWithFlags flags location =
       , mdl = Material.model
       , videosPage = Main.Pages.Videos.initialModel
       , settingsPage = Main.Pages.Settings.initialModel
-      , viewMode = ViewVideos
-      , playlistItems = []
-      , searchResults = []
-      , searchTerms = Nothing
-      , playlistResponses = []
-      , err = Nothing
-      , token = Nothing
       }
-    , PouchDB.fetchVideos PouchDB.defaultFetchVideosArgs
+    , Cmd.none
     )
 
 

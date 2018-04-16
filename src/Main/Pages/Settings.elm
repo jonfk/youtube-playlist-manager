@@ -9,6 +9,7 @@ import Material.Icon as Icon
 import Material.List as Lists
 import Material.Options as Options
 import Navigation
+import PouchDB
 import PouchDB.Youtube
 import Youtube.Authorize
 
@@ -31,6 +32,7 @@ type Msg
     | PouchDBError String
     | DismissError
     | YTPlaylistsComponentMsg Main.Components.YoutubePlaylists.Msg
+    | DeletePouchDB
 
 
 initialModel : Model
@@ -94,7 +96,7 @@ viewSettingsActionsList model =
                 [ 2 ]
                 model.mdl
                 [ Button.icon
-                , Options.onClick NoOp
+                , Options.onClick DeletePouchDB
                 ]
                 [ Icon.i "delete_forever" ]
             ]
@@ -159,6 +161,9 @@ update msg model =
             in
             { model | ytPlaylistsComp = subModel } ! [ Cmd.map YTPlaylistsComponentMsg subCmd ]
 
+        DeletePouchDB ->
+            model ! [ PouchDB.deleteDatabase () ]
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -170,9 +175,13 @@ subscriptions model =
         ]
 
 
-cmdOnPageLoad : Cmd Msg
-cmdOnPageLoad =
+cmdOnPageLoad : Model -> Cmd Msg
+cmdOnPageLoad model =
+    let
+        token =
+            Maybe.andThen .token model.youtubeData
+    in
     Cmd.batch
         [ PouchDB.Youtube.fetchYoutubeData ()
-        , Cmd.map YTPlaylistsComponentMsg Main.Components.YoutubePlaylists.cmdOnLoad
+        , Cmd.map YTPlaylistsComponentMsg <| Main.Components.YoutubePlaylists.cmdOnLoad token
         ]

@@ -51,10 +51,35 @@ db.createIndex({
     }
 });
 
-// PouchDB
+// PouchDB ports
+
+app.ports.deleteDatabase.subscribe(function(args) {
+    db.destroy().then(function(response) {
+        // success
+        console.log('Deleted Database');
+    }).catch(function(err) {
+        console.log('deleteDatabase error');
+        console.log(err);
+    });
+});
+
+// PouchDB.Video ports
+
+function mapItemToDocIdRev(doc) {
+    doc['_id'] = doc.id;
+    doc['_rev'] = doc.rev;
+    return doc;
+}
+
+function mapReverseIdRev(doc) {
+    doc.id = doc['_id'];
+    doc.rev = doc['_rev'];
+    return doc;
+}
+
 app.ports.storeVideos.subscribe(function(documents) {
     documents.forEach(function(doc) {
-        doc['_id'] = doc.id;
+        doc = mapItemToDocIdRev(doc);
         doc.type = YOUTUBE_VIDEO_DOC_TYPE;
     });
 
@@ -109,14 +134,42 @@ app.ports.fetchVideos.subscribe(function(args) {
     });
 });
 
-app.ports.deleteDatabase.subscribe(function(args) {
-    db.destroy().then(function(response) {
-        // success
-        console.log('Deleted Database');
+app.ports.fetchVideosByIds.subscribe(function(videoIds) {
+
+    db.allDocs({
+        keys: videoIds,
+        include_docs: true
+    }).then(function(res) {
+        let docs = [];
+        for (let i = 0; i < res.rows.length; i++) {
+            let doc = mapReverseIdRev(res.rows[i].doc);
+            docs.push(doc);
+        }
+        app.ports.fetchedVideos.send(docs);
     }).catch(function(err) {
-        console.log('deleteDatabase error');
-        console.log(err);
+        app.ports.pouchdbVideoErr.send(JSON.stringify(err));
     });
+});
+
+
+function fetchVideoDoc(id) {
+    console.log("fetchVideoDoc " + id);
+    db.get(id).then(function(doc) {
+        doc = mapReverseIdRev(doc);
+        console.log(doc);
+
+        app.ports.fetchedVideo.send(doc);
+    }).catch(function(err) {
+        if (err.status === 404) {
+            app.ports.fetchedYoutubeData.send(null);
+        } else {
+            app.ports.pouchdbVideoErr.send(JSON.stringify(err));
+        }
+    });
+}
+
+app.ports.fetchVideo.subscribe(function(videoId) {
+    fetchVideoDoc(videoId);
 });
 
 // PouchDB Search

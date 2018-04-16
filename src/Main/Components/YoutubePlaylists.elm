@@ -3,6 +3,7 @@ module Main.Components.YoutubePlaylists exposing (..)
 import Dict
 import Html exposing (Html, button, div, text)
 import Http
+import List
 import Main.Errors as Errors
 import Main.View.ErrorCard as ErrorCard
 import Main.View.YoutubePlaylistsTable as YoutubePlaylistsTable
@@ -27,7 +28,7 @@ type Msg
     | Mdl (Material.Msg Msg)
     | FetchedPlaylistsListResp (Result Http.Error YTPlaylists.YoutubePlaylistsListResponse)
     | FetchAllPlaylists
-    | TogglePlaylist YTPlaylists.YoutubePlaylist
+    | TogglePlaylist DBPlaylists.Doc
     | DismissError
     | FetchedDBPlaylist DBPlaylists.Doc
     | FetchedDBPlaylists (List DBPlaylists.Doc)
@@ -54,7 +55,7 @@ view token model =
         [ text "Playlists Component"
         , ErrorCard.view model.mdl model.error DismissError Mdl
         , viewFetchPlaylistsButton token model
-        , YoutubePlaylistsTable.view model.allYoutubePlaylists (selectedPlaylist model) model.mdl Mdl TogglePlaylist
+        , viewPlaylists model
         ]
 
 
@@ -71,6 +72,15 @@ viewFetchPlaylistsButton token model =
             ]
             [ text "Fetch Playlists" ]
         ]
+
+viewPlaylists : Model -> Html Msg
+viewPlaylists model =
+    let playlists = if List.isEmpty model.allYoutubePlaylists then
+                        Dict.toList model.selectedPlaylists |> List.map (\(_,x) -> x)
+                    else
+                        List.map DBPlaylists.fromYT model.allYoutubePlaylists
+    in
+    YoutubePlaylistsTable.view playlists (selectedPlaylist model) model.mdl Mdl TogglePlaylist
 
 
 update : Maybe String -> Msg -> Model -> ( Model, Cmd Msg )
@@ -98,11 +108,7 @@ update token msg model =
                     { model | error = Just <| Errors.extractBody httpErr } ! []
 
         FetchAllPlaylists ->
-            let
-                fetchCmd =
-                    Maybe.map (\tkn -> fetchPlaylists tkn Nothing) token
-            in
-            model ! [ Maybe.withDefault Cmd.none fetchCmd ]
+            model ! [ Maybe.withDefault Cmd.none <| fetchAllPlaylists token ]
 
         DismissError ->
             { model | error = Nothing } ! []
@@ -111,7 +117,7 @@ update token msg model =
             let
                 ( cmd, newSelectedPlaylists ) =
                     if not <| selectedPlaylist model playlist.id then
-                        ( DBPlaylists.storePlaylist { id = playlist.id, rev = Nothing, title = playlist.snippet.title }
+                        ( DBPlaylists.storePlaylist playlist
                         , model.selectedPlaylists
                         )
                     else
@@ -148,6 +154,11 @@ subscriptions model =
         ]
 
 
+fetchAllPlaylists : Maybe String -> Maybe (Cmd Msg)
+fetchAllPlaylists token =
+    Maybe.map (\tkn -> fetchPlaylists tkn Nothing) token
+
+
 fetchPlaylists : String -> Maybe String -> Cmd Msg
 fetchPlaylists token nextPageToken =
     Http.send FetchedPlaylistsListResp <|
@@ -164,6 +175,9 @@ fetchPlaylists token nextPageToken =
             )
 
 
-cmdOnLoad : Cmd Msg
-cmdOnLoad =
-    DBPlaylists.fetchAllPlaylists ()
+cmdOnLoad : Maybe String -> Cmd Msg
+cmdOnLoad token =
+    Cmd.batch
+        [ DBPlaylists.fetchAllPlaylists ()
+        --, Maybe.withDefault Cmd.none <| fetchAllPlaylists token
+        ]

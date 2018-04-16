@@ -1,6 +1,6 @@
 port module PouchDB.Search exposing (..)
 
-import PouchDB exposing (Document)
+import PouchDB.Video exposing (Document)
 
 port searchVideos : String -> Cmd msg
 

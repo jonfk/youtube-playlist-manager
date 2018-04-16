@@ -10,7 +10,7 @@ import PouchDB.Playlists as DBPlaylists
 import Dict
 
 
-view : List YTPlaylists.YoutubePlaylist -> (String -> Bool) -> Material.Model -> (Material.Msg msg -> msg) -> (YTPlaylists.YoutubePlaylist -> msg) -> Html msg
+view : List DBPlaylists.Doc -> (String -> Bool) -> Material.Model -> (Material.Msg msg -> msg) -> (DBPlaylists.Doc -> msg) -> Html msg
 view model isSelected mdlModel mdlMsg selectItem =
     div []
         [ Table.table []
@@ -19,7 +19,7 @@ view model isSelected mdlModel mdlMsg selectItem =
                     [ Table.th [] [ text "Selected" ]
                     , Table.th [] [ text "Id" ]
                     , Table.th [] [ text "Title" ]
-                    , Table.th [] [ text "Description" ]
+                    --, Table.th [] [ text "Description" ]
                     ]
                 ]
             , Table.tbody []
@@ -37,8 +37,8 @@ view model isSelected mdlModel mdlMsg selectItem =
                                         []
                                     ]
                                 , Table.td [] [ text item.id ]
-                                , Table.td [] [ text item.snippet.title ]
-                                , Table.td [] [ text item.snippet.description ]
+                                , Table.td [] [ text item.title ]
+                                --, Table.td [] [ text item.snippet.description ]
                                 ]
                         )
                 )
