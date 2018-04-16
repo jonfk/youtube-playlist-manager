@@ -36,15 +36,8 @@ initWithFlags flags location =
       , mdl = Material.model
       , videosPage = Main.Pages.Videos.initialModel
       , settingsPage = Main.Pages.Settings.initialModel
-      , viewMode = ViewVideos
-      , playlistItems = []
-      , searchResults = []
-      , searchTerms = Nothing
-      , playlistResponses = []
-      , err = Nothing
-      , token = Nothing
       }
-    , PouchDB.fetchVideos PouchDB.defaultFetchVideosArgs
+    , Cmd.none
     )
 
 

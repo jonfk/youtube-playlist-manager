@@ -1,4 +1,4 @@
 port module PouchDB exposing (..)
 
 
-port deleteDatabase : Bool -> Cmd msg
+port deleteDatabase : () -> Cmd msg

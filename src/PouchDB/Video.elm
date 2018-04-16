@@ -1,4 +1,4 @@
-port module PouchDB exposing (..)
+port module PouchDB.Video exposing (..)
 
 import Dict
 import Maybe

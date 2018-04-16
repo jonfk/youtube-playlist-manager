@@ -1,19 +1,19 @@
 module Main.Pages.Videos exposing (..)
 
 import Html exposing (Html, button, div, text)
-import PouchDB
+import PouchDB.Video as VideoDB
 
 
 type alias Model =
-    { playlistItems : List PouchDB.Document
-    , searchResults : List PouchDB.Document
+    { playlistItems : List VideoDB.Document
+    , searchResults : List VideoDB.Document
     , searchTerms : Maybe String
     }
 
 
 type Msg
     = NoOp
-    | FetchedVideos (List PouchDB.Document)
+    | FetchedVideos (List VideoDB.Document)
 
 
 initialModel : Model
@@ -45,10 +45,10 @@ update msg model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ PouchDB.fetchedVideos FetchedVideos
+        [ VideoDB.fetchedVideos FetchedVideos
         ]
 
 
 cmdOnPageLoad : Cmd Msg
 cmdOnPageLoad =
-    PouchDB.fetchVideos PouchDB.defaultFetchVideosArgs
+    VideoDB.fetchVideos VideoDB.defaultFetchVideosArgs
