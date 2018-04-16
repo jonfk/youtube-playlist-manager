@@ -47,9 +47,6 @@ type Msg
     | VideosMsg Main.Pages.Videos.Msg
     | SettingsMsg Main.Pages.Settings.Msg
       -- OLD
-    | FetchNewPlaylistItems
-    | NewPlaylistItems (Result Http.Error PlaylistItemListResponse)
-    | DeleteDatabase
     | FetchVideos PouchDB.FetchVideosArgs
     | StartSearch
     | UpdateSearch String
@@ -88,39 +85,6 @@ update msg model =
             { model | settingsPage = subModel } ! [ Cmd.map SettingsMsg subCmd ]
 
         -- OLD
-        FetchNewPlaylistItems ->
-            let
-                mapfetch =
-                    Maybe.map (\token -> fetchPlaylistItems token) model.token
-
-                fetchIfTokenExists =
-                    Maybe.withDefault Cmd.none mapfetch
-            in
-            ( model, fetchIfTokenExists )
-
-        NewPlaylistItems (Ok playlistItemResp) ->
-            let
-                token =
-                    Maybe.withDefault "" model.token
-
-                documents =
-                    PouchDB.fromYoutubePlaylistItems playlistItemResp.items
-
-                commands =
-                    Cmd.batch [ fetchAllPlaylistItemsAndRefreshPage token playlistItemResp, PouchDB.storeVideos documents ]
-            in
-            ( { model
-                | playlistResponses = playlistItemResp :: model.playlistResponses
-              }
-            , commands
-            )
-
-        NewPlaylistItems (Err httpErr) ->
-            ( { model | err = Just httpErr }, Cmd.none )
-
-        DeleteDatabase ->
-            ( model, PouchDB.deleteDatabase True )
-
         FetchVideos args ->
             ( model, PouchDB.fetchVideos args )
 
@@ -167,32 +131,32 @@ cmdOnNewLocation route =
 -- Playlist
 
 
-fetchPlaylistItems : String -> Cmd Msg
-fetchPlaylistItems token =
-    fetchNextPlaylistItems token Nothing
+-- fetchPlaylistItems : String -> Cmd Msg
+-- fetchPlaylistItems token =
+--     fetchNextPlaylistItems token Nothing
 
 
-fetchAllPlaylistItemsAndRefreshPage : String -> PlaylistItemListResponse -> Cmd Msg
-fetchAllPlaylistItemsAndRefreshPage token resp =
-    let
-        fetchPlaylistItems =
-            fetchNextPlaylistItems token resp.nextPageToken
+-- fetchAllPlaylistItemsAndRefreshPage : String -> PlaylistItemListResponse -> Cmd Msg
+-- fetchAllPlaylistItemsAndRefreshPage token resp =
+--     let
+--         fetchPlaylistItems =
+--             fetchNextPlaylistItems token resp.nextPageToken
 
-        fetchVideosFromPouchDB =
-            PouchDB.fetchVideos PouchDB.defaultFetchVideosArgs
-    in
-    case resp.nextPageToken of
-        Just nextPageToken ->
-            Cmd.batch [ fetchPlaylistItems, fetchVideosFromPouchDB ]
+--         fetchVideosFromPouchDB =
+--             PouchDB.fetchVideos PouchDB.defaultFetchVideosArgs
+--     in
+--     case resp.nextPageToken of
+--         Just nextPageToken ->
+--             Cmd.batch [ fetchPlaylistItems, fetchVideosFromPouchDB ]
 
-        Nothing ->
-            fetchVideosFromPouchDB
+--         Nothing ->
+--             fetchVideosFromPouchDB
 
 
-fetchNextPlaylistItems : String -> Maybe String -> Cmd Msg
-fetchNextPlaylistItems token nextPageToken =
-    Http.send NewPlaylistItems <|
-        Youtube.PlaylistItems.getPlaylistItems token [ IdPart, SnippetPart ] (PlaylistId "PLjcCiIbRzHcDHKqqcOghMQUFGv5wdE96F") (Just 10) Nothing nextPageToken Nothing
+-- fetchNextPlaylistItems : String -> Maybe String -> Cmd Msg
+-- fetchNextPlaylistItems token nextPageToken =
+--     Http.send NewPlaylistItems <|
+--         Youtube.PlaylistItems.getPlaylistItems token [ IdPart, SnippetPart ] (PlaylistId "PLjcCiIbRzHcDHKqqcOghMQUFGv5wdE96F") (Just 10) Nothing nextPageToken Nothing
 
 
 
