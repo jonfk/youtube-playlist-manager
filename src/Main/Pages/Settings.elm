@@ -162,7 +162,7 @@ update msg model =
             { model | ytPlaylistsComp = subModel } ! [ Cmd.map YTPlaylistsComponentMsg subCmd ]
 
         DeletePouchDB ->
-            model ! [ PouchDB.deleteDatabase ()]
+            model ! [ PouchDB.deleteDatabase () ]
 
 
 subscriptions : Model -> Sub Msg
@@ -175,9 +175,13 @@ subscriptions model =
         ]
 
 
-cmdOnPageLoad : Cmd Msg
-cmdOnPageLoad =
+cmdOnPageLoad : Model -> Cmd Msg
+cmdOnPageLoad model =
+    let
+        token =
+            Maybe.andThen .token model.youtubeData
+    in
     Cmd.batch
         [ PouchDB.Youtube.fetchYoutubeData ()
-        , Cmd.map YTPlaylistsComponentMsg Main.Components.YoutubePlaylists.cmdOnLoad
+        , Cmd.map YTPlaylistsComponentMsg <| Main.Components.YoutubePlaylists.cmdOnLoad token
         ]

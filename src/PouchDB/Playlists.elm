@@ -1,10 +1,20 @@
 port module PouchDB.Playlists exposing (..)
 
+import Youtube.Playlist as YTPlaylists
+
 
 type alias Doc =
     { id : String
     , rev : Maybe String
     , title : String
+    }
+
+
+fromYT : YTPlaylists.YoutubePlaylist -> Doc
+fromYT playlist =
+    { id = playlist.id
+    , rev = Nothing
+    , title = playlist.snippet.title
     }
 
 

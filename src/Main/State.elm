@@ -93,11 +93,11 @@ urlUpdate model route =
         newModel =
             { model | location = route }
     in
-    newModel ! [ cmdOnNewLocation route ]
+    newModel ! [ cmdOnNewLocation model route ]
 
 
-cmdOnNewLocation : Maybe Route.Route -> Cmd Msg
-cmdOnNewLocation route =
+cmdOnNewLocation :Model ->  Maybe Route.Route -> Cmd Msg
+cmdOnNewLocation model route =
     case route of
         Nothing ->
             Cmd.none
@@ -106,7 +106,7 @@ cmdOnNewLocation route =
             Cmd.map VideosMsg Main.Pages.Videos.cmdOnPageLoad
 
         Just Route.Settings ->
-            Cmd.map SettingsMsg Main.Pages.Settings.cmdOnPageLoad
+            Cmd.map SettingsMsg <| Main.Pages.Settings.cmdOnPageLoad model.settingsPage
 
 
 
