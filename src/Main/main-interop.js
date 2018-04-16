@@ -138,6 +138,23 @@ app.ports.fetchVideos.subscribe(function(args) {
     });
 });
 
+app.ports.fetchVideosByIds.subscribe(function(videoIds) {
+
+    db.allDocs({
+        keys: videoIds,
+        include_docs: true
+    }).then(function(res) {
+        let docs = [];
+        for (let i = 0; i < res.rows.length; i++) {
+            let doc = mapReverseIdRev(res.rows[i].doc);
+            docs.push(doc);
+        }
+        app.ports.fetchedVideos.send(docs);
+    }).catch(function(err) {
+        app.ports.pouchdbVideoErr.send(JSON.stringify(err));
+    });
+});
+
 
 function fetchVideoDoc(id) {
     console.log("fetchVideoDoc " + id);

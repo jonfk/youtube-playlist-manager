@@ -157,6 +157,9 @@ port storeVideos : List Document -> Cmd msg
 port fetchVideos : FetchVideosArgs -> Cmd msg
 
 
+port fetchVideosByIds : List Int -> Cmd msg
+
+
 port fetchedVideos : (List Document -> msg) -> Sub msg
 
 
@@ -164,5 +167,6 @@ port fetchVideo : String -> Cmd msg
 
 
 port fetchedVideo : (Maybe Document -> msg) -> Sub msg
+
 
 port pouchdbVideoErr : (String -> msg) -> Sub msg
