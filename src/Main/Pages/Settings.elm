@@ -18,7 +18,7 @@ import Main.Components.SyncVideosButton
 type alias Model =
     { mdl : Material.Model
     , youtubeData : Maybe PouchDB.Youtube.YoutubeDataDoc
-    , error : Maybe String
+    , errors : List String
     , ytPlaylistsComp : Main.Components.YoutubePlaylists.Model
     }
 
@@ -40,7 +40,7 @@ initialModel : Model
 initialModel =
     { mdl = Material.model
     , youtubeData = Nothing
-    , error = Nothing
+    , errors = []
     , ytPlaylistsComp = Main.Components.YoutubePlaylists.initialModel
     }
 
@@ -53,7 +53,7 @@ view model =
     in
     div []
         [ text "Settings Page"
-        , Main.View.ErrorCard.view model.mdl model.error DismissError Mdl
+        , Main.View.ErrorCard.view model.mdl model.errors DismissError Mdl
         , viewSettingsActionsList model
         , Main.Components.YoutubePlaylists.view token model.ytPlaylistsComp |> Html.map YTPlaylistsComponentMsg
         , text <| toString model
@@ -150,10 +150,10 @@ update msg model =
             ( { model | youtubeData = ytDataDoc }, Cmd.none )
 
         PouchDBError error ->
-            { model | error = Just error } ! []
+            { model | errors = List.append model.errors [error] } ! []
 
         DismissError ->
-            { model | error = Nothing } ! []
+            { model | errors = [] } ! []
 
         YTPlaylistsComponentMsg subMsg ->
             let

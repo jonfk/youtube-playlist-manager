@@ -19,7 +19,7 @@ type alias Model =
     { mdl : Material.Model
     , allYoutubePlaylists : List YTPlaylists.YoutubePlaylist
     , selectedPlaylists : Dict.Dict String DBPlaylists.Doc
-    , error : Maybe String
+    , errors : List String
     }
 
 
@@ -40,7 +40,7 @@ initialModel =
     { mdl = Material.model
     , allYoutubePlaylists = []
     , selectedPlaylists = Dict.empty
-    , error = Nothing
+    , errors = []
     }
 
 
@@ -53,7 +53,7 @@ view : Maybe String -> Model -> Html Msg
 view token model =
     div []
         [ text "Playlists Component"
-        , ErrorCard.view model.mdl model.error DismissError Mdl
+        , ErrorCard.view model.mdl model.errors DismissError Mdl
         , viewFetchPlaylistsButton token model
         , viewPlaylists model
         ]
@@ -105,13 +105,13 @@ update token msg model =
                     { model | allYoutubePlaylists = newAllYtPlaylists } ! [ Maybe.withDefault Cmd.none (Debug.log "next command " nextCmd) ]
 
                 Err httpErr ->
-                    { model | error = Just <| Errors.extractBody httpErr } ! []
+                    { model | errors = [Errors.extractBody httpErr] |> List.append model.errors } ! []
 
         FetchAllPlaylists ->
             model ! [ Maybe.withDefault Cmd.none <| fetchAllPlaylists token ]
 
         DismissError ->
-            { model | error = Nothing } ! []
+            { model | errors = [] } ! []
 
         TogglePlaylist playlist ->
             let
@@ -142,7 +142,7 @@ update token msg model =
             { model | selectedPlaylists = selectedPlaylists } ! []
 
         DBPlaylistsErr err ->
-            { model | error = Just err } ! []
+            { model | errors = List.append model.errors [err] } ! []
 
 
 subscriptions : Model -> Sub Msg

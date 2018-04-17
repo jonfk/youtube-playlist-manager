@@ -9,14 +9,17 @@ import Material.Icon as Icon
 import Material.Options as Options
 
 
-view : Material.Model -> Maybe String -> msg -> (Material.Msg msg -> msg) -> Html msg
-view mdlModel errorModel dismissMsg mdlMsg =
+view : Material.Model -> List String -> msg -> (Material.Msg msg -> msg) -> Html msg
+view mdlModel errorsModel dismissMsg mdlMsg =
     let
         whiteText =
             Color.text Color.white
     in
-    case errorModel of
-        Just error ->
+    case errorsModel of
+        [] ->
+            div [] []
+
+        errors ->
             Card.view
                 [ Color.background (Color.color Color.Red Color.S400)
                 , Options.css "width" "100%"
@@ -24,7 +27,7 @@ view mdlModel errorModel dismissMsg mdlMsg =
                 --, Options.css "height" "192px"
                 ]
                 [ Card.title [] [ Card.head [ whiteText ] [ text "Error" ] ]
-                , Card.text [ whiteText ] [ text error ]
+                , Card.text [ whiteText ] [ text <| String.join ", " errors ]
                 , Card.actions
                     [ Card.border, Options.css "vertical-align" "center", Options.css "text-align" "right", whiteText ]
                     [ Button.render mdlMsg
@@ -37,6 +40,3 @@ view mdlModel errorModel dismissMsg mdlMsg =
                         [ Icon.i "close" ]
                     ]
                 ]
-
-        Nothing ->
-            div [] []
