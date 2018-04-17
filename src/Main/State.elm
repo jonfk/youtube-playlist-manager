@@ -68,25 +68,6 @@ update msg model =
             { model | settingsPage = subModel } ! [ Cmd.map SettingsMsg subCmd ]
 
 
-
--- OLD
--- FetchVideos args ->
---     ( model, PouchDB.fetchVideos args )
--- StartSearch ->
---     let
---         searchCmd =
---             Maybe.withDefault Cmd.none <| Maybe.map PouchDB.Search.searchVideos model.searchTerms
---     in
---     ( { model | viewMode = ViewSearchResults }, searchCmd )
--- UpdateSearch arg ->
---     if arg == "" then
---         ( { model | searchTerms = Nothing, viewMode = ViewVideos }, Cmd.none )
---     else
---         ( { model | searchTerms = Just arg }, Cmd.none )
--- SearchedVideos videos ->
---     ( { model | searchResults = videos }, Cmd.none )
-
-
 urlUpdate : Model -> Maybe Route -> ( Model, Cmd Msg )
 urlUpdate model route =
     let
@@ -96,7 +77,7 @@ urlUpdate model route =
     newModel ! [ cmdOnNewLocation model route ]
 
 
-cmdOnNewLocation :Model ->  Maybe Route.Route -> Cmd Msg
+cmdOnNewLocation : Model -> Maybe Route.Route -> Cmd Msg
 cmdOnNewLocation model route =
     case route of
         Nothing ->
@@ -110,27 +91,6 @@ cmdOnNewLocation model route =
 
 
 
--- Playlist
--- fetchPlaylistItems : String -> Cmd Msg
--- fetchPlaylistItems token =
---     fetchNextPlaylistItems token Nothing
--- fetchAllPlaylistItemsAndRefreshPage : String -> PlaylistItemListResponse -> Cmd Msg
--- fetchAllPlaylistItemsAndRefreshPage token resp =
---     let
---         fetchPlaylistItems =
---             fetchNextPlaylistItems token resp.nextPageToken
---         fetchVideosFromPouchDB =
---             PouchDB.fetchVideos PouchDB.defaultFetchVideosArgs
---     in
---     case resp.nextPageToken of
---         Just nextPageToken ->
---             Cmd.batch [ fetchPlaylistItems, fetchVideosFromPouchDB ]
---         Nothing ->
---             fetchVideosFromPouchDB
--- fetchNextPlaylistItems : String -> Maybe String -> Cmd Msg
--- fetchNextPlaylistItems token nextPageToken =
---     Http.send NewPlaylistItems <|
---         Youtube.PlaylistItems.getPlaylistItems token [ IdPart, SnippetPart ] (PlaylistId "PLjcCiIbRzHcDHKqqcOghMQUFGv5wdE96F") (Just 10) Nothing nextPageToken Nothing
 -- PORTS and SUBSCRIPTIONS
 
 
