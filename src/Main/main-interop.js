@@ -77,23 +77,53 @@ function mapReverseIdRev(doc) {
     return doc;
 }
 
-app.ports.storeVideos.subscribe(function(documents) {
+function containsById(arr, elem) {
+    return ;
+}
+
+function updateVideo(oldDoc, newDoc) {
+    let containsById = (arr, elem) => arr.findIndex(x => x.id === elem.id) > -1;
+    let channelsToAdd = [];
+    let playlistsToAdd = [];
+    newDoc.channels.forEach(channel => {
+        if (containsById(oldDoc.channels, channel)) {
+            channelsToAdd.push(channel);
+        }
+    });
+
+    newDoc.playlists.forEach(playlist => {
+        if (containsById(oldDoc.playlists, playlist)) {
+            playlistsToAdd.push(playlist);
+        }
+    });
+}
+
+app.ports.saveOrUpdateVideos.subscribe(function(documents) {
     documents.forEach(function(doc) {
         doc = mapItemToDocIdRev(doc);
         doc.type = YOUTUBE_VIDEO_DOC_TYPE;
     });
 
-    db.bulkDocs(documents).then(function() {
-        // success
-    }).catch(function(err) {
-        if (err.name === 'conflict') {
-            console.log('storeVideos conflict error');
-            console.log(err);
-        } else {
-            console.log('storeVideos unknown error');
-            console.log(err);
-        }
-    });;
+    documents.forEach(doc => {
+        db.get(doc.id).then(function(oldDoc) {
+            let newDoc = updateVideo(oldDoc, doc);
+            db.put(newDoc).then(function() {
+                // success
+            }).catch(function(err) {
+                app.ports.pouchdbVideoErr.send(JSON.stringify(err));
+            });
+        }).catch(function(err) {
+            if (err.status === 404) {
+                db.put(doc).then(function() {
+                    // success
+                }).catch(function(err) {
+                    app.ports.pouchdbVideoErr.send(JSON.stringify(err));
+                });
+            } else {
+                app.ports.pouchdbVideoErr.send(JSON.stringify(err));
+            }
+        });
+    });
 });
 
 // TODO: filter by doc type. Maybe used mango queries: https://pouchdb.com/guides/mango-queries.html
@@ -131,23 +161,6 @@ app.ports.fetchVideos.subscribe(function(args) {
     }).catch(function(err) {
         console.log('fetchVideos error');
         console.log(err);
-    });
-});
-
-app.ports.fetchVideosByIds.subscribe(function(videoIds) {
-
-    db.allDocs({
-        keys: videoIds,
-        include_docs: true
-    }).then(function(res) {
-        let docs = [];
-        for (let i = 0; i < res.rows.length; i++) {
-            let doc = mapReverseIdRev(res.rows[i].doc);
-            docs.push(doc);
-        }
-        app.ports.fetchedVideos.send(docs);
-    }).catch(function(err) {
-        app.ports.pouchdbVideoErr.send(JSON.stringify(err));
     });
 });
 

@@ -148,16 +148,10 @@ youtubeVideoUrl doc =
     "https://youtu.be/" ++ doc.video.videoId
 
 
-port storeVideo : Document -> Cmd msg
-
-
-port storeVideos : List Document -> Cmd msg
+port saveOrUpdateVideos : List Document -> Cmd msg
 
 
 port fetchVideos : FetchVideosArgs -> Cmd msg
-
-
-port fetchVideosByIds : List Int -> Cmd msg
 
 
 port fetchedVideos : (List Document -> msg) -> Sub msg
