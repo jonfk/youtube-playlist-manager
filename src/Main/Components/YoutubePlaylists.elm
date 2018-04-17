@@ -18,7 +18,7 @@ import Youtube.Playlist as YTPlaylists
 
 type alias Model =
     { mdl : Material.Model
-    , allYoutubePlaylists : List YTPlaylists.YoutubePlaylist
+    , allYoutubePlaylists : Dict.Dict String YTPlaylists.YoutubePlaylist
     , selectedPlaylists : Dict.Dict String DBPlaylists.Doc
     , errors : List String
     , syncVideosButtonModel : SyncVideosButton.Model
@@ -41,7 +41,7 @@ type Msg
 initialModel : Model
 initialModel =
     { mdl = Material.model
-    , allYoutubePlaylists = []
+    , allYoutubePlaylists = Dict.empty
     , selectedPlaylists = Dict.empty
     , errors = []
     , syncVideosButtonModel = SyncVideosButton.initialModel
@@ -87,10 +87,10 @@ viewPlaylists : Model -> Html Msg
 viewPlaylists model =
     let
         playlists =
-            if List.isEmpty model.allYoutubePlaylists then
+            if Dict.isEmpty model.allYoutubePlaylists then
                 Dict.toList model.selectedPlaylists |> List.map (\( _, x ) -> x)
             else
-                List.map DBPlaylists.fromYT model.allYoutubePlaylists
+                Dict.toList model.allYoutubePlaylists |> List.map (\(x, pl) -> pl) |> List.map DBPlaylists.fromYT
     in
     YoutubePlaylistsTable.view playlists (selectedPlaylist model) model.mdl Mdl TogglePlaylist
 
@@ -109,7 +109,7 @@ update token msg model =
                 Ok playlistsResp ->
                     let
                         newAllYtPlaylists =
-                            List.append model.allYoutubePlaylists playlistsResp.items
+                            List.foldr (\newPl allPls-> Dict.insert newPl.id newPl allPls) model.allYoutubePlaylists playlistsResp.items
 
                         nextCmd =
                             Maybe.map2 (\tkn nextPageTkn -> fetchPlaylists tkn (Just nextPageTkn)) token playlistsResp.nextPageToken
