@@ -96,6 +96,20 @@ newFromYoutubePlaylistItem item =
     Maybe.map fromSnippet item.snippet
 
 
+fromYoutubePlaylistItems : List Youtube.PlaylistItems.PlaylistItem -> List Document
+fromYoutubePlaylistItems items =
+    let
+        maybeToList x =
+            case x of
+                Just a ->
+                    [ a ]
+
+                Nothing ->
+                    []
+    in
+    List.concatMap (\x -> maybeToList <| newFromYoutubePlaylistItem x) items
+
+
 updateDocFromYTItem : Youtube.PlaylistItems.PlaylistItem -> Document -> Maybe Document
 updateDocFromYTItem ytItem doc =
     let
