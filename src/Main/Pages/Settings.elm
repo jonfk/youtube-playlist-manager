@@ -12,7 +12,6 @@ import Navigation
 import PouchDB
 import PouchDB.Youtube
 import Youtube.Authorize
-import Main.Components.SyncVideosButton
 
 
 type alias Model =
