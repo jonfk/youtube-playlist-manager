@@ -2,6 +2,7 @@ module Main.Pages.Videos exposing (..)
 
 import Html exposing (Html, button, div, text)
 import PouchDB.Video as VideoDB
+import Main.View.VideosList as VideosList
 
 
 type alias Model =
@@ -28,6 +29,7 @@ view : Model -> Html Msg
 view model =
     div []
         [ text "Videos Page"
+        , VideosList.view model.playlistItems
         , text <| toString model
         ]
 
