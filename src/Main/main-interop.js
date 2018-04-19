@@ -130,16 +130,6 @@ app.ports.saveOrUpdateVideos.subscribe(function(documents) {
 // TODO: Add pagination
 app.ports.fetchVideos.subscribe(function(args) {
     console.log(args);
-    let allDocsArgs = {};
-    allDocsArgs.limit = args.limit;
-    allDocsArgs.include_docs = true;
-    allDocsArgs.descending = args.descending;
-    if (args.startKey !== null) {
-        allDocsArgs.startkey = args.startKey;
-    }
-    if (args.endKey !== null) {
-        allDocsArgs.endkey = args.endKey;
-    }
 
     db.find({
         selector: {

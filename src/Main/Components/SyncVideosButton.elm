@@ -6,7 +6,7 @@ import Http
 import Material
 import Material.Button as Button
 import Material.Options as Options
-import PouchDB.Video as VideoDB
+import PouchDB.Videos as VideoDB
 import Task
 import Youtube.PlaylistItems as YTPlaylistItems
 

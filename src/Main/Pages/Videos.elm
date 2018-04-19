@@ -1,20 +1,20 @@
 module Main.Pages.Videos exposing (..)
 
 import Html exposing (Html, button, div, text)
-import PouchDB.Video as VideoDB
+import PouchDB.Videos as VideoDB
 import Main.View.VideosList as VideosList
 
 
 type alias Model =
-    { playlistItems : List VideoDB.Document
-    , searchResults : List VideoDB.Document
+    { playlistItems : List VideoDB.Doc
+    , searchResults : List VideoDB.Doc
     , searchTerms : Maybe String
     }
 
 
 type Msg
     = NoOp
-    | FetchedVideos (List VideoDB.Document)
+    | FetchedVideos (List VideoDB.Doc)
 
 
 initialModel : Model
@@ -40,8 +40,8 @@ update msg model =
         NoOp ->
             model ! []
 
-        FetchedVideos videoDocuments ->
-            ( { model | playlistItems = videoDocuments }, Cmd.none )
+        FetchedVideos videoDocs ->
+            ( { model | playlistItems = videoDocs }, Cmd.none )
 
 
 subscriptions : Model -> Sub Msg

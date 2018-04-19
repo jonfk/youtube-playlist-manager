@@ -4,10 +4,10 @@ import Html exposing (Html, button, div, text)
 import Material
 import Material.List as Lists
 import Material.Options as Options
-import PouchDB.Video as VideoDB
+import PouchDB.Videos as VideoDB
 
 
-view : List VideoDB.Document -> Html msg
+view : List VideoDB.Doc -> Html msg
 view model =
     div []
         [ Lists.ul []
@@ -17,7 +17,7 @@ view model =
         ]
 
 
-viewRow : Int -> VideoDB.Document -> Html msg
+viewRow : Int -> VideoDB.Doc -> Html msg
 viewRow index doc =
     Lists.li [ Lists.withBody ]
         -- NB! Required on every Lists.li containing body.

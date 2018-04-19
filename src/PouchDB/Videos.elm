@@ -1,4 +1,4 @@
-port module PouchDB.Video exposing (..)
+port module PouchDB.Videos exposing (..)
 
 import Dict
 import Maybe
@@ -37,7 +37,7 @@ type alias Playlist =
     }
 
 
-type alias Document =
+type alias Doc =
     { id : String
     , rev : Maybe String
     , video : YoutubePlaylistVideo
@@ -64,7 +64,7 @@ defaultFetchVideosArgs =
     { startKey = Nothing, endKey = Nothing, descending = False, limit = 20 }
 
 
-newFromYoutubePlaylistItem : Youtube.PlaylistItems.PlaylistItem -> Maybe Document
+newFromYoutubePlaylistItem : Youtube.PlaylistItems.PlaylistItem -> Maybe Doc
 newFromYoutubePlaylistItem item =
     let
         fromSnippet snippet =
@@ -96,7 +96,7 @@ newFromYoutubePlaylistItem item =
     Maybe.map fromSnippet item.snippet
 
 
-fromYoutubePlaylistItems : List Youtube.PlaylistItems.PlaylistItem -> List Document
+fromYoutubePlaylistItems : List Youtube.PlaylistItems.PlaylistItem -> List Doc
 fromYoutubePlaylistItems items =
     let
         maybeToList x =
@@ -110,7 +110,7 @@ fromYoutubePlaylistItems items =
     List.concatMap (\x -> maybeToList <| newFromYoutubePlaylistItem x) items
 
 
-updateDocFromYTItem : Youtube.PlaylistItems.PlaylistItem -> Document -> Maybe Document
+updateDocFromYTItem : Youtube.PlaylistItems.PlaylistItem -> Doc -> Maybe Doc
 updateDocFromYTItem ytItem doc =
     let
         fromSnippet snippet =
@@ -147,7 +147,7 @@ updateDocFromYTItem ytItem doc =
     Maybe.map fromSnippet ytItem.snippet
 
 
-syncFromYTPlaylisItem : Youtube.PlaylistItems.PlaylistItem -> Maybe Document -> Maybe Document
+syncFromYTPlaylisItem : Youtube.PlaylistItems.PlaylistItem -> Maybe Doc -> Maybe Doc
 syncFromYTPlaylisItem ytItem doc =
     case doc of
         Nothing ->
@@ -157,24 +157,24 @@ syncFromYTPlaylisItem ytItem doc =
             updateDocFromYTItem ytItem oldDoc
 
 
-youtubeVideoUrl : Document -> String
+youtubeVideoUrl : Doc -> String
 youtubeVideoUrl doc =
     "https://youtu.be/" ++ doc.video.videoId
 
 
-port saveOrUpdateVideos : List Document -> Cmd msg
+port saveOrUpdateVideos : List Doc -> Cmd msg
 
 
 port fetchVideos : FetchVideosArgs -> Cmd msg
 
 
-port fetchedVideos : (List Document -> msg) -> Sub msg
+port fetchedVideos : (List Doc -> msg) -> Sub msg
 
 
 port fetchVideo : String -> Cmd msg
 
 
-port fetchedVideo : (Maybe Document -> msg) -> Sub msg
+port fetchedVideo : (Maybe Doc -> msg) -> Sub msg
 
 
 port pouchdbVideoErr : (String -> msg) -> Sub msg

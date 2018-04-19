@@ -1,7 +1,7 @@
 port module PouchDB.Search exposing (..)
 
-import PouchDB.Video exposing (Document)
+import PouchDB.Videos exposing (Doc)
 
 port searchVideos : String -> Cmd msg
 
-port searchedVideos : (List Document -> msg) -> Sub msg
+port searchedVideos : (List Doc -> msg) -> Sub msg
