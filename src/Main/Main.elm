@@ -28,13 +28,17 @@ main =
 
 initWithFlags : Flags -> Navigation.Location -> ( Model, Cmd Msg )
 initWithFlags flags location =
-    ( { location = Route.locFor location
-      , mdl = Material.model
-      , videosPage = Main.Pages.Videos.initialModel
-      , settingsPage = Main.Pages.Settings.initialModel
-      }
-    , Cmd.none
-    )
+    let
+        initModel =
+            { location = Route.locFor location
+            , mdl = Material.model
+            , videosPage = Main.Pages.Videos.initialModel
+            , settingsPage = Main.Pages.Settings.initialModel
+            }
+    in
+    location
+        |> Route.locFor
+        |> urlUpdate initModel
 
 
 type alias Flags =
