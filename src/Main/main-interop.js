@@ -126,7 +126,8 @@ app.ports.saveOrUpdateVideos.subscribe(function(documents) {
     });
 });
 
-// TODO: filter by doc type. Maybe used mango queries: https://pouchdb.com/guides/mango-queries.html
+// TODO: Fix sorting. May require changing the format of the document
+// TODO: Add pagination
 app.ports.fetchVideos.subscribe(function(args) {
     console.log(args);
     let allDocsArgs = {};
@@ -140,27 +141,22 @@ app.ports.fetchVideos.subscribe(function(args) {
         allDocsArgs.endkey = args.endKey;
     }
 
-    db.allDocs(allDocsArgs).then(function(result) {
+    db.find({
+        selector: {
+            type: { $eq: YOUTUBE_VIDEO_DOC_TYPE}
+        },
+        limit: 50
+    }).then(function(result) {
         let docs = [];
-        console.log(result);
-        // Reverse document order if descending since pouch will return in reverse order
-        if (args.descending) {
-            for (let i = result.rows.length - 1; i > 0; i--) {
-                if (result.rows[i].doc.type === YOUTUBE_VIDEO_DOC_TYPE) {
-                    docs.push(result.rows[i].doc);
-                }
-            }
-        } else {
-            for (let i = 0; i < result.rows.length; i++) {
-                if (result.rows[i].doc.type === YOUTUBE_VIDEO_DOC_TYPE) {
-                    docs.push(result.rows[i].doc);
-                }
-            }
+        for (let i = 0; i < result.docs.length; i++) {
+            let doc = mapReverseIdRev(result.docs[i]);
+            docs.push(doc);
         }
         app.ports.fetchedVideos.send(docs);
     }).catch(function(err) {
         console.log('fetchVideos error');
         console.log(err);
+        app.ports.pouchdbVideoErr.send(JSON.stringify(err));
     });
 });
 
