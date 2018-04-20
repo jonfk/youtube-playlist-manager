@@ -18,15 +18,15 @@ view model =
 
 
 viewRow : Int -> VideoDB.Doc -> Html msg
-viewRow index doc =
+viewRow index video =
     Lists.li [ Lists.withBody ]
         -- NB! Required on every Lists.li containing body.
         [ Lists.content []
-            [ text doc.video.title
+            [ text video.title
             , Lists.body []
-                [ Options.span [ Options.css "font-weight" "600" ] [ text doc.id ]
+                [ Options.span [ Options.css "font-weight" "600" ] [ text video.id ]
                 , Options.span [] [ text " - " ]
-                , Options.span [] [ text doc.video.description ]
+                , Options.span [] [ text video.description ]
                 ]
             ]
         ]

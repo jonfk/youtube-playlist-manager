@@ -3,7 +3,6 @@ port module PouchDB.Videos exposing (..)
 import Dict
 import Maybe
 import Set
-import String exposing (padLeft)
 import Youtube.PlaylistItems
 
 
@@ -40,9 +39,13 @@ type alias Playlist =
 type alias Doc =
     { id : String
     , rev : Maybe String
-    , video : YoutubePlaylistVideo
-    , tags : List String
-    , notes : String
+    , videoId : String
+    , publishedAt : String
+    , title : String
+    , description : String
+    , channels : List Channel
+    , playlists : List Playlist
+    , thumbnails : List ( String, Thumbnail )
     }
 
 
@@ -80,17 +83,13 @@ newFromYoutubePlaylistItem item =
             in
             { id = videoId
             , rev = Nothing
-            , video =
-                { videoId = videoId
-                , publishedAt = snippet.publishedAt
-                , title = snippet.title
-                , description = snippet.description
-                , channels = [ { id = snippet.channelId, title = snippet.channelTitle } ]
-                , playlists = [ { id = playlistId, position = position } ]
-                , thumbnails = Dict.toList snippet.thumbnails
-                }
-            , tags = []
-            , notes = ""
+            , videoId = videoId
+            , publishedAt = snippet.publishedAt
+            , title = snippet.title
+            , description = snippet.description
+            , channels = [ { id = snippet.channelId, title = snippet.channelTitle } ]
+            , playlists = [ { id = playlistId, position = position } ]
+            , thumbnails = Dict.toList snippet.thumbnails
             }
     in
     Maybe.map fromSnippet item.snippet
@@ -110,56 +109,10 @@ fromYoutubePlaylistItems items =
     List.concatMap (\x -> maybeToList <| newFromYoutubePlaylistItem x) items
 
 
-updateDocFromYTItem : Youtube.PlaylistItems.PlaylistItem -> Doc -> Maybe Doc
-updateDocFromYTItem ytItem doc =
-    let
-        fromSnippet snippet =
-            let
-                oldVideo =
-                    doc.video
-
-                oldChannels =
-                    List.map .id oldVideo.channels |> Set.fromList
-
-                newChannel =
-                    { id = snippet.channelId, title = snippet.channelTitle }
-
-                newChannels =
-                    if Set.member snippet.channelId oldChannels then
-                        oldVideo.channels
-                    else
-                        newChannel :: oldVideo.channels
-
-                oldPlaylists =
-                    List.map .id oldVideo.playlists |> Set.fromList
-
-                newPlaylists =
-                    if Set.member snippet.playlistId oldPlaylists then
-                        oldVideo.playlists
-                    else
-                        { id = snippet.playlistId, position = snippet.position } :: oldVideo.playlists
-
-                newVideo =
-                    { oldVideo | channels = newChannels, playlists = newPlaylists }
-            in
-            { doc | video = newVideo }
-    in
-    Maybe.map fromSnippet ytItem.snippet
-
-
-syncFromYTPlaylisItem : Youtube.PlaylistItems.PlaylistItem -> Maybe Doc -> Maybe Doc
-syncFromYTPlaylisItem ytItem doc =
-    case doc of
-        Nothing ->
-            newFromYoutubePlaylistItem ytItem
-
-        Just oldDoc ->
-            updateDocFromYTItem ytItem oldDoc
-
 
 youtubeVideoUrl : Doc -> String
 youtubeVideoUrl doc =
-    "https://youtu.be/" ++ doc.video.videoId
+    "https://youtu.be/" ++ doc.videoId
 
 
 port saveOrUpdateVideos : List Doc -> Cmd msg
