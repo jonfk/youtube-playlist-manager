@@ -5,9 +5,6 @@ import '../PouchDB/videos';
 import '../PouchDB/youtube';
 import '../PouchDB/playlists';
 
-// Note move out to a seperate file
-// Ref: https://github.com/google/closure-compiler/wiki/Managing-Dependencies
-
 /*
  * Ports
  */
@@ -70,11 +67,3 @@ app.ports.searchVideos.subscribe(function(arg) {
         app.ports.searchedVideos.send(docs);
     });
 });
-
-
-// PouchDB.Youtube ports
-
-
-// PouchDB.Playlists ports
-
-

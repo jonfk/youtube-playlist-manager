@@ -1,5 +1,7 @@
 const path = require('path');
 
+// Add closure compile to build
+
 module.exports = {
     mode: 'development',
     entry: './src/Main/main-interop.js',
