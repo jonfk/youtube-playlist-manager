@@ -16,6 +16,7 @@
     "webpack-closure-compiler": "^2.1.4"
   },
   "dependencies": {
+    "lodash": "^4.17.5",
     "pouchdb": "^6.3.4",
     "pouchdb-browser": "^6.4.3",
     "pouchdb-find": "^6.4.3",
