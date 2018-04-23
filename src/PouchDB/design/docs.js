@@ -20,32 +20,32 @@ export function checkAndUpdateDesignDoc(designDoc) {
         delete oldDoc['_rev'];
         if (!isEqual(oldDoc, designDoc)) {
             console.log('updating Design Doc');
-            fetchVideosDdoc['_rev'] = rev;
-            putDesignDoc(fetchVideosDdoc);
+            designDoc['_rev'] = rev;
+            putDesignDoc(designDoc);
         }
     }).catch(function(err) {
         if (err.status === 404) {
-            putDesignDoc(fetchVideosDdoc);
+            putDesignDoc(designDoc);
         }
-        sendErr('updateDesignDoc', err);
+        sendError('updateDesignDoc', err);
     });
 }
 
 function updateDesignDoc(designDoc) {
     return db.get(designDoc['_id']).then(function(oldDoc) {
-        fetchVideosDdoc['_rev'] = oldDoc['_rev'];
-        putDesignDoc(fetchVideosDdoc);
+        designDoc['_rev'] = oldDoc['_rev'];
+        putDesignDoc(designDoc);
     }).catch(function(err) {
         if (err.status === 404) {
-            putDesignDoc(fetchVideosDdoc);
+            putDesignDoc(designDoc);
         }
-        sendErr('updateDesignDoc', err);
+        sendError('updateDesignDoc', err);
     });
 }
 
 function putDesignDoc(designDoc) {
     db.put(designDoc).then(function() {}).catch(function(err) {
-        sendErr('putDesignDoc', err);
+        sendError('putDesignDoc', err);
     });
 }
 
