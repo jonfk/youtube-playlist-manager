@@ -1,4 +1,3 @@
-//import appPromise from '../Main/elm-app';
 import PouchDB from 'pouchdb-browser';
 import PouchDBFind from 'pouchdb-find';
 import PouchDBSearch from 'pouchdb-quick-search';
@@ -18,20 +17,6 @@ db.createIndex({
         fields: ['type']
     }
 });
-
-// TODO dynamic import app here?
-// appPromise.then(function(app) {
-//     app.ports.deleteDatabase.subscribe(function(args) {
-//         db.destroy().then(function(response) {
-//             // success
-//             console.log('Deleted Database');
-//         }).catch(function(err) {
-//             console.log('deleteDatabase error');
-//             console.log(err);
-//         });
-//     });
-// });
-
 
 export const YOUTUBE_DATA_DOC_TYPE = "YOUTUBE_DATA_DOC_TYPE";
 export const YOUTUBE_VIDEO_DOC_TYPE = "YOUTUBE_VIDEO_DOC_TYPE";
