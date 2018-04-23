@@ -1,5 +1,7 @@
 
-var node = document.getElementById('main');
-var app = Elm.Main.embed(node, {});
+import { checkAndUpdateAllDesignDocs } from '../PouchDB/design/docs';
 
-module.exports = app;
+export default checkAndUpdateAllDesignDocs().then(function() {
+    var node = document.getElementById('main');
+    return Elm.Main.embed(node, {});
+});

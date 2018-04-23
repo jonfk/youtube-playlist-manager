@@ -7,7 +7,7 @@ function fetchVideosMapFunc(doc) {
 
 const ddocId = '_design/videos_index';
 
-export default designDoc = {
+export default {
     _id: ddocId,
     views: {
         by_publishedAt: {

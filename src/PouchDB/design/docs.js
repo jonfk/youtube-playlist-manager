@@ -1,6 +1,11 @@
 import {
     isEqual
 } from 'lodash';
+import db, {
+    YOUTUBE_DATA_DOC_TYPE,
+    YOUTUBE_VIDEO_DOC_TYPE,
+    YOUTUBE_PLAYLIST_DOC_TYPE
+} from '../db';
 import videos from './videos';
 
 // TODO: create port for design docs
