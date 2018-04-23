@@ -1,4 +1,7 @@
 
+import db, { YOUTUBE_DATA_DOC_TYPE, YOUTUBE_VIDEO_DOC_TYPE, YOUTUBE_PLAYLIST_DOC_TYPE } from '../PouchDB/db';
+import app from '../Main/elm-app';
+
 function sendPlaylistPortError(err) {
     console.log("playlist err");
     console.log(err);

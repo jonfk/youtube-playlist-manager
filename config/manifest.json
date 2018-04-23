@@ -20,5 +20,6 @@
         "http://*/",
         "https://www.googleapis.com/auth/youtube.readonly",
         "https://accounts.google.com/o/oauth2/v2/auth"
-    ]
+    ],
+    "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
 }

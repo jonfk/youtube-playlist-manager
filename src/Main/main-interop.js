@@ -1,9 +1,9 @@
 // DB Stuff
 import db, { YOUTUBE_DATA_DOC_TYPE, YOUTUBE_VIDEO_DOC_TYPE, YOUTUBE_PLAYLIST_DOC_TYPE } from '../PouchDB/db';
-import app from './elm-app';
 import '../PouchDB/videos';
 import '../PouchDB/youtube';
 import '../PouchDB/playlists';
+import app from './elm-app';
 
 /*
  * Ports

@@ -1,6 +1,13 @@
 
 import db, { YOUTUBE_DATA_DOC_TYPE, YOUTUBE_VIDEO_DOC_TYPE, YOUTUBE_PLAYLIST_DOC_TYPE } from '../PouchDB/db';
+import 'pouchdb-browser';
 import app from '../Main/elm-app';
+
+function sendErr(context, err) {
+    console.error(context);
+    console.error(err);
+    app.ports.pouchdbVideoErr.send(JSON.stringify(err));
+}
 
 function mapItemToDocIdRev(doc) {
     doc['_id'] = doc.id;
@@ -47,46 +54,49 @@ app.ports.saveOrUpdateVideos.subscribe(function(documents) {
             db.put(newDoc).then(function() {
                 // success
             }).catch(function(err) {
-                app.ports.pouchdbVideoErr.send(JSON.stringify(err));
+                sendErr('saveOrUpdateVideos', err);
             });
         }).catch(function(err) {
             if (err.status === 404) {
                 db.put(doc).then(function() {
                     // success
                 }).catch(function(err) {
-                    app.ports.pouchdbVideoErr.send(JSON.stringify(err));
+                    sendErr('saveOrUpdateVideos', err);
                 });
             } else {
-                app.ports.pouchdbVideoErr.send(JSON.stringify(err));
+                sendErr('saveOrUpdateVideos', err);
             }
         });
     });
 });
 
-// TODO: Fix sorting. May require changing the format of the document
-// TODO: Add pagination
-app.ports.fetchVideos.subscribe(function(args) {
-    console.log(args);
+function subscribeFetchVideos() {
+    // TODO: Fix sorting. May require changing the format of the document
+    // TODO: Add pagination
+    app.ports.fetchVideos.subscribe(function(args) {
+        console.log(args);
 
-    db.find({
-        selector: {
-            type: { $eq: YOUTUBE_VIDEO_DOC_TYPE}
-        },
-        limit: 50
-    }).then(function(result) {
-        let docs = [];
-        for (let i = 0; i < result.docs.length; i++) {
-            let doc = mapReverseIdRev(result.docs[i]);
-            docs.push(doc);
-        }
-        app.ports.fetchedVideos.send(docs);
-    }).catch(function(err) {
-        console.log('fetchVideos error');
-        console.log(err);
-        app.ports.pouchdbVideoErr.send(JSON.stringify(err));
+        db.query('videos_index/by_publishedAt', {
+            limit: args.limit,
+            include_docs: true,
+        }).then(function(result) {
+            console.log('result fetchVideos');
+            console.log(result);
+            let docs = [];
+            for (let i = 0; i < result.rows.length; i++) {
+                let doc = mapReverseIdRev(result.rows[i].doc);
+                docs.push(doc);
+            }
+            app.ports.fetchedVideos.send(docs);
+        }).catch(function(err) {
+            console.log('fetchVideos error');
+            console.log(err);
+            app.ports.pouchdbVideoErr.send(JSON.stringify(err));
+        });
     });
-});
+}
 
+subscribeFetchVideos();
 
 function fetchVideoDoc(id) {
     console.log("fetchVideoDoc " + id);
@@ -107,3 +117,4 @@ function fetchVideoDoc(id) {
 app.ports.fetchVideo.subscribe(function(videoId) {
     fetchVideoDoc(videoId);
 });
+

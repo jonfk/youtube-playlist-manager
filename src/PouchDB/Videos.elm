@@ -59,12 +59,12 @@ type alias FetchVideosArgs =
 
 defaultVideosLimitArg : Int
 defaultVideosLimitArg =
-    20
+    50
 
 
 defaultFetchVideosArgs : FetchVideosArgs
 defaultFetchVideosArgs =
-    { startKey = Nothing, endKey = Nothing, descending = False, limit = 20 }
+    { startKey = Nothing, endKey = Nothing, descending = False, limit = defaultVideosLimitArg }
 
 
 newFromYoutubePlaylistItem : Youtube.PlaylistItems.PlaylistItem -> Maybe Doc

@@ -8,7 +8,10 @@ PouchDB.plugin(PouchDBSearch);
 
 var db = new PouchDB('youtube-manager');
 
-
+db.on('error', function(err) {
+    console.log('db error');
+    console.log(err);
+});
 
 db.createIndex({
     index: {
