@@ -1,9 +1,14 @@
 // DB Stuff
-import db, { YOUTUBE_DATA_DOC_TYPE, YOUTUBE_VIDEO_DOC_TYPE, YOUTUBE_PLAYLIST_DOC_TYPE } from '../PouchDB/db';
+import db, {
+    YOUTUBE_DATA_DOC_TYPE,
+    YOUTUBE_VIDEO_DOC_TYPE,
+    YOUTUBE_PLAYLIST_DOC_TYPE
+} from '../PouchDB/db';
 import '../PouchDB/videos';
 import '../PouchDB/youtube';
 import '../PouchDB/playlists';
-import app from './elm-app';
+import '../PouchDB/dbDelete';
+import appPromise from './elm-app';
 
 /*
  * Ports
@@ -20,21 +25,23 @@ let uri = 'https://accounts.google.com/o/oauth2/v2/auth?client_id=' +
     '&include_granted_scopes=true&state=state_parameter_passthrough' +
     '&redirect_uri=' + encodeURIComponent(redirectUri);
 
-app.ports.authorize.subscribe(function(interactive) {
-    chrome.identity.launchWebAuthFlow({
-        'interactive': interactive,
-        'url': uri
-    }, function(redirectUrl) {
-        if (chrome.runtime.lastError) {
-            console.log(chrome.runtime.lastError);
-        } else {
-            if (redirectUrl) {
-                let url = document.createElement('a');
-                url.href = redirectUrl;
-                url.port_ = url.port;
-                app.ports.authorizedRedirectUri.send(url);
+appPromise.then(app => {
+    app.ports.authorize.subscribe(function(interactive) {
+        chrome.identity.launchWebAuthFlow({
+            'interactive': interactive,
+            'url': uri
+        }, function(redirectUrl) {
+            if (chrome.runtime.lastError) {
+                console.log(chrome.runtime.lastError);
+            } else {
+                if (redirectUrl) {
+                    let url = document.createElement('a');
+                    url.href = redirectUrl;
+                    url.port_ = url.port;
+                    app.ports.authorizedRedirectUri.send(url);
+                }
             }
-        }
+        });
     });
 });
 
@@ -53,17 +60,19 @@ db.search({
     console.log(err);
 });
 
-app.ports.searchVideos.subscribe(function(arg) {
-    db.search({
-        query: arg,
-        fields: searchableFields,
-        include_docs: true,
-        mm: '100%'
-    }).then(function(result) {
-        let docs = [];
-        for (let i = 0; i < result.rows.length; i++) {
-            docs.push(result.rows[i].doc);
-        }
-        app.ports.searchedVideos.send(docs);
+appPromise.then(app => {
+    app.ports.searchVideos.subscribe(function(arg) {
+        db.search({
+            query: arg,
+            fields: searchableFields,
+            include_docs: true,
+            mm: '100%'
+        }).then(function(result) {
+            let docs = [];
+            for (let i = 0; i < result.rows.length; i++) {
+                docs.push(result.rows[i].doc);
+            }
+            app.ports.searchedVideos.send(docs);
+        });
     });
 });
