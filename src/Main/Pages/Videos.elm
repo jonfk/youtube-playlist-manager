@@ -1,12 +1,18 @@
 module Main.Pages.Videos exposing (..)
 
 import Html exposing (Html, button, div, text)
-import PouchDB.Videos as VideoDB
 import Main.View.VideosList as VideosList
+import Material
+import Material.Button as Button
+import Material.Options as Options
+import PouchDB.Videos as VideoDB
 
 
 type alias Model =
-    { playlistItems : List VideoDB.Doc
+    { mdl : Material.Model
+    , playlistItems : List VideoDB.Doc
+    , totalVideos : Maybe Int
+    , currentIndex : Int
     , searchResults : List VideoDB.Doc
     , searchTerms : Maybe String
     }
@@ -14,24 +20,45 @@ type alias Model =
 
 type Msg
     = NoOp
-    | FetchedVideos (List VideoDB.Doc)
+    | FetchedVideos VideoDB.VideosResult
+    | FetchVideos Int
+    | Mdl (Material.Msg Msg)
 
 
 initialModel : Model
 initialModel =
-    { playlistItems = []
+    { mdl = Material.model
+    , playlistItems = []
+    , totalVideos = Nothing
+    , currentIndex = 0
     , searchResults = []
     , searchTerms = Nothing
     }
+
+
+
+-- TODO Add error card to page
 
 
 view : Model -> Html Msg
 view model =
     div []
         [ text "Videos Page"
+        , nextButton model
         , VideosList.view model.playlistItems
         , text <| toString model
         ]
+
+
+nextButton : Model -> Html Msg
+nextButton model =
+    Button.render Mdl
+        [ 0 ]
+        model.mdl
+        [ Button.raised
+        , Options.onClick <| FetchVideos (model.currentIndex + VideoDB.defaultVideosLimitArg)
+        ]
+        [ text "Next Videos" ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -40,8 +67,14 @@ update msg model =
         NoOp ->
             model ! []
 
-        FetchedVideos videoDocs ->
-            ( { model | playlistItems = videoDocs }, Cmd.none )
+        FetchedVideos videosResult ->
+            ( { model | playlistItems = videosResult.docs, totalVideos = Just videosResult.totalRows }, Cmd.none )
+
+        FetchVideos nextIndex ->
+            { model | currentIndex = nextIndex } ! [ VideoDB.fetchVideosArgs nextIndex |> VideoDB.fetchVideos ]
+
+        Mdl msg_ ->
+            Material.update Mdl msg_ model
 
 
 subscriptions : Model -> Sub Msg

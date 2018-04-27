@@ -50,21 +50,24 @@ type alias Doc =
 
 
 type alias FetchVideosArgs =
-    { startKey : Maybe String
-    , endKey : Maybe String
-    , descending : Bool
-    , limit : Int
+    { limit : Int
+    , skip : Int
     }
 
 
 defaultVideosLimitArg : Int
 defaultVideosLimitArg =
-    50
+    10
 
 
 defaultFetchVideosArgs : FetchVideosArgs
 defaultFetchVideosArgs =
-    { startKey = Nothing, endKey = Nothing, descending = False, limit = defaultVideosLimitArg }
+    { limit = defaultVideosLimitArg, skip = 0 }
+
+
+fetchVideosArgs : Int -> FetchVideosArgs
+fetchVideosArgs skip =
+    { limit = defaultVideosLimitArg, skip = skip }
 
 
 newFromYoutubePlaylistItem : Youtube.PlaylistItems.PlaylistItem -> Maybe Doc
@@ -109,10 +112,15 @@ fromYoutubePlaylistItems items =
     List.concatMap (\x -> maybeToList <| newFromYoutubePlaylistItem x) items
 
 
-
 youtubeVideoUrl : Doc -> String
 youtubeVideoUrl doc =
     "https://youtu.be/" ++ doc.videoId
+
+
+type alias VideosResult =
+    { docs : List Doc
+    , totalRows : Int
+    }
 
 
 port saveOrUpdateVideos : List Doc -> Cmd msg
@@ -121,7 +129,7 @@ port saveOrUpdateVideos : List Doc -> Cmd msg
 port fetchVideos : FetchVideosArgs -> Cmd msg
 
 
-port fetchedVideos : (List Doc -> msg) -> Sub msg
+port fetchedVideos : (VideosResult -> msg) -> Sub msg
 
 
 port fetchVideo : String -> Cmd msg

@@ -74,33 +74,30 @@ appPromise.then(function(app) {
         });
     });
 
-    function subscribeFetchVideos() {
-        // TODO: Fix sorting. May require changing the format of the document
-        // TODO: Add pagination
-        app.ports.fetchVideos.subscribe(function(args) {
-            console.log(args);
+    // TODO: Fix sorting. May require changing the format of the document
+    // TODO: Add pagination
+    app.ports.fetchVideos.subscribe(function(args) {
+        console.log(args);
 
-            db.query('videos_index/by_publishedAt', {
-                limit: args.limit,
-                include_docs: true,
-            }).then(function(result) {
-                console.log('result fetchVideos');
-                console.log(result);
-                let docs = [];
-                for (let i = 0; i < result.rows.length; i++) {
-                    let doc = mapReverseIdRev(result.rows[i].doc);
-                    docs.push(doc);
-                }
-                app.ports.fetchedVideos.send(docs);
-            }).catch(function(err) {
-                console.log('fetchVideos error');
-                console.log(err);
-                app.ports.pouchdbVideoErr.send(JSON.stringify(err));
-            });
+        db.query('videos_index/by_publishedAt', {
+            limit: args.limit,
+            skip: args.skip,
+            include_docs: true,
+        }).then(function(result) {
+            console.log('result fetchVideos');
+            console.log(result);
+            let docs = [];
+            for (let i = 0; i < result.rows.length; i++) {
+                let doc = mapReverseIdRev(result.rows[i].doc);
+                docs.push(doc);
+            }
+            app.ports.fetchedVideos.send({docs: docs, totalRows: result.total_rows});
+        }).catch(function(err) {
+            console.log('fetchVideos error');
+            console.log(err);
+            app.ports.pouchdbVideoErr.send(JSON.stringify(err));
         });
-    }
-
-    subscribeFetchVideos();
+    });
 
     function fetchVideoDoc(id) {
         console.log("fetchVideoDoc " + id);
