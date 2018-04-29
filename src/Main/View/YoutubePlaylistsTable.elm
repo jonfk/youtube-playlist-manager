@@ -39,14 +39,3 @@ viewRow idx playlist token mdlModel mdlMsg syncMsg =
             [ Html.map syncMsg <| SyncPlaylistButton.view [ 65, 1, idx ] token [ playlist ] mdlModel
             ]
         ]
-
-
-syncButton : Int -> DBPlaylists.Doc -> Material.Model -> (Material.Msg msg -> msg) -> (String -> msg) -> Html msg
-syncButton idx playlist mdlModel mdlMsg syncMsg =
-    Button.render mdlMsg
-        [ 1, 0 ]
-        mdlModel
-        [ Button.raised
-        , Options.onClick <| syncMsg playlist.id
-        ]
-        [ text "Sync" ]
