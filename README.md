@@ -31,4 +31,4 @@
 - https://github.com/pouchdb-community/pouchdb-quick-search
 
 ## TODO
-- Fetch each video from the playlist to get channel title, duration
+- Add method to delete playlist and videos belonging to playlist

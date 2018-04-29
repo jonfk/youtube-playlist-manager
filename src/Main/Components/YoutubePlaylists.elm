@@ -30,7 +30,6 @@ type Msg
     | Mdl (Material.Msg Msg)
     | FetchedPlaylistsListResp (Result Http.Error YTPlaylists.YoutubePlaylistsListResponse)
     | FetchAllPlaylists
-    | TogglePlaylist DBPlaylists.Doc
     | DismissError
     | FetchedDBPlaylist DBPlaylists.Doc
     | FetchedDBPlaylists (List DBPlaylists.Doc)
@@ -56,7 +55,7 @@ view : Maybe String -> Model -> Html Msg
 view token model =
     let
         selectedPlaylistIds =
-            Dict.toList model.selectedPlaylists |> List.map (\( id, playlist ) -> id)
+            Dict.toList model.selectedPlaylists |> List.map (\( id, playlist ) -> playlist)
     in
     div []
         [ text "Playlists Component"
@@ -134,20 +133,6 @@ update token msg model =
 
         DismissError ->
             { model | errors = [] } ! []
-
-        TogglePlaylist playlist ->
-            let
-                ( cmd, newSelectedPlaylists ) =
-                    if not <| selectedPlaylist model playlist.id then
-                        ( DBPlaylists.storePlaylist playlist
-                        , model.selectedPlaylists
-                        )
-                    else
-                        ( Dict.get playlist.id model.selectedPlaylists |> Maybe.map DBPlaylists.removePlaylist |> Maybe.withDefault Cmd.none
-                        , Dict.remove playlist.id model.selectedPlaylists
-                        )
-            in
-            { model | selectedPlaylists = newSelectedPlaylists } ! [ cmd ]
 
         FetchedDBPlaylist playlistDoc ->
             let

@@ -7,6 +7,7 @@ import Material
 import Material.Button as Button
 import Material.Options as Options
 import PouchDB.Videos as VideoDB
+import PouchDB.Playlists as DBPlaylists
 import Task
 import Youtube.PlaylistItems as YTPlaylistItems
 
@@ -18,7 +19,7 @@ type alias Model =
 type Msg
     = NoOp
     | Mdl (Material.Msg Msg)
-    | TriggerSync (List String)
+    | TriggerSync (List DBPlaylists.Doc)
     | FetchedPlaylistItems (Result Http.Error FetchedPlaylistRespWrapper)
 
 
@@ -28,7 +29,7 @@ type alias FetchedPlaylistRespWrapper =
     }
 
 
-view : List Int -> Maybe String -> List String -> Model -> Html Msg
+view : List Int -> Maybe String -> List DBPlaylists.Doc -> Model -> Html Msg
 view mdlIdx token playlistIds model =
     div []
         [ Button.render Mdl
@@ -55,13 +56,13 @@ update token msg model =
             in
             ( Maybe.withDefault model model_, cmd, Nothing )
 
-        TriggerSync playlistIds ->
+        TriggerSync playlists ->
             let
-                fetchItems playlistId =
-                    Maybe.map (\tkn -> fetchPlaylistItems playlistId tkn Nothing) token
+                fetchItems playlist =
+                    Maybe.map (\tkn -> Cmd.batch [fetchPlaylistItems playlist.id tkn Nothing, DBPlaylists.storePlaylist playlist]) token
 
                 cmds =
-                    List.map (\playlistId -> fetchItems playlistId |> Maybe.withDefault Cmd.none) playlistIds
+                    List.map (\playlist -> fetchItems playlist |> Maybe.withDefault Cmd.none) playlists
             in
             ( model, Cmd.batch cmds, Nothing )
 

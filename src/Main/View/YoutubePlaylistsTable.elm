@@ -36,7 +36,7 @@ viewRow idx playlist token mdlModel mdlMsg syncMsg =
                 [ text playlist.id ]
             ]
         , Lists.content2 []
-            [ Html.map syncMsg <| SyncPlaylistButton.view [ 65, 1, idx ] token [ playlist.id ] mdlModel
+            [ Html.map syncMsg <| SyncPlaylistButton.view [ 65, 1, idx ] token [ playlist ] mdlModel
             ]
         ]
 
