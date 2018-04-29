@@ -1,46 +1,52 @@
 module Main.View.YoutubePlaylistsTable exposing (..)
 
 import Html exposing (Html, button, div, text)
+import List
+import Main.Components.SyncVideosButton as SyncPlaylistButton
 import Material
+import Material.Button as Button
+import Material.List as Lists
 import Material.Options as Options
-import Material.Table as Table
 import Material.Toggles as Toggles
-import Youtube.Playlist as YTPlaylists
 import PouchDB.Playlists as DBPlaylists
-import Dict
+import Youtube.Playlist as YTPlaylists
 
 
-view : List DBPlaylists.Doc -> (String -> Bool) -> Material.Model -> (Material.Msg msg -> msg) -> (DBPlaylists.Doc -> msg) -> Html msg
-view model isSelected mdlModel mdlMsg selectItem =
+type alias Model =
+    { mdl : Material.Model
+    , playlists : List DBPlaylists.Doc
+    , token : Maybe String
+    }
+
+
+view : Model -> (Material.Msg msg -> msg) -> (SyncPlaylistButton.Msg -> msg) -> Html msg
+view model mdlMsg syncMsg =
     div []
-        [ Table.table []
-            [ Table.thead []
-                [ Table.tr []
-                    [ Table.th [] [ text "Selected" ]
-                    , Table.th [] [ text "Id" ]
-                    , Table.th [] [ text "Title" ]
-                    --, Table.th [] [ text "Description" ]
-                    ]
-                ]
-            , Table.tbody []
-                (model
-                    |> List.indexedMap
-                        (\idx item ->
-                            Table.tr []
-                                [ Table.td []
-                                    [ Toggles.checkbox mdlMsg
-                                        [ idx ]
-                                        mdlModel
-                                        [ Options.onToggle (selectItem item)
-                                        , Toggles.value <| isSelected item.id
-                                        ]
-                                        []
-                                    ]
-                                , Table.td [] [ text item.id ]
-                                , Table.td [] [ text item.title ]
-                                --, Table.td [] [ text item.snippet.description ]
-                                ]
-                        )
-                )
+        [ Lists.ul [] <|
+            List.indexedMap (\idx playlist -> viewRow idx playlist model.token model.mdl mdlMsg syncMsg) model.playlists
+        ]
+
+
+viewRow : Int -> DBPlaylists.Doc -> Maybe String -> Material.Model -> (Material.Msg msg -> msg) -> (SyncPlaylistButton.Msg -> msg) -> Html msg
+viewRow idx playlist token mdlModel mdlMsg syncMsg =
+    Lists.li [ Lists.withSubtitle ]
+        [ Lists.content []
+            [ text playlist.title
+            , Lists.subtitle []
+                [ text playlist.id ]
+            ]
+        , Lists.content2 []
+            [ Html.map syncMsg <| SyncPlaylistButton.view [ 65, 1, idx ] token [ playlist.id ] mdlModel
             ]
         ]
+
+
+syncButton : Int -> DBPlaylists.Doc -> Material.Model -> (Material.Msg msg -> msg) -> (String -> msg) -> Html msg
+syncButton idx playlist mdlModel mdlMsg syncMsg =
+    Button.render mdlMsg
+        [ 1, 0 ]
+        mdlModel
+        [ Button.raised
+        , Options.onClick <| syncMsg playlist.id
+        ]
+        [ text "Sync" ]

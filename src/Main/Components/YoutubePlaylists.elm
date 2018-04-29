@@ -11,6 +11,7 @@ import Main.View.YoutubePlaylistsTable as YoutubePlaylistsTable
 import Material
 import Material.Button as Button
 import Material.Options as Options
+import Material.Typography as Typography
 import Maybe.Extra
 import PouchDB.Playlists as DBPlaylists
 import Youtube.Playlist as YTPlaylists
@@ -21,7 +22,6 @@ type alias Model =
     , allYoutubePlaylists : Dict.Dict String YTPlaylists.YoutubePlaylist
     , selectedPlaylists : Dict.Dict String DBPlaylists.Doc
     , errors : List String
-    , syncVideosButtonModel : SyncVideosButton.Model
     }
 
 
@@ -44,7 +44,6 @@ initialModel =
     , allYoutubePlaylists = Dict.empty
     , selectedPlaylists = Dict.empty
     , errors = []
-    , syncVideosButtonModel = SyncVideosButton.initialModel
     }
 
 
@@ -63,8 +62,8 @@ view token model =
         [ text "Playlists Component"
         , ErrorCard.view model.mdl model.errors DismissError Mdl
         , viewFetchPlaylistsButton token model
-        , SyncVideosButton.view token selectedPlaylistIds model.syncVideosButtonModel |> Html.map SyncVideosButtonMsg
-        , viewPlaylists model
+        , SyncVideosButton.view [ 64, 0 ] token selectedPlaylistIds model.mdl |> Html.map SyncVideosButtonMsg
+        , viewPlaylists token model
         ]
 
 
@@ -83,16 +82,27 @@ viewFetchPlaylistsButton token model =
         ]
 
 
-viewPlaylists : Model -> Html Msg
-viewPlaylists model =
+viewPlaylists : Maybe String -> Model -> Html Msg
+viewPlaylists token model =
     let
-        playlists =
-            if Dict.isEmpty model.allYoutubePlaylists then
-                Dict.toList model.selectedPlaylists |> List.map (\( _, x ) -> x)
-            else
-                Dict.toList model.allYoutubePlaylists |> List.map (\(x, pl) -> pl) |> List.map DBPlaylists.fromYT
+        selectedPlaylists =
+            Dict.toList model.selectedPlaylists |> List.map (\( _, x ) -> x)
+
+        allPlaylists =
+            Dict.toList model.allYoutubePlaylists |> List.map (\( x, pl ) -> pl) |> List.map DBPlaylists.fromYT
+
+        subModel playlists =
+            { mdl = model.mdl
+            , playlists = playlists
+            , token = token
+            }
     in
-    YoutubePlaylistsTable.view playlists (selectedPlaylist model) model.mdl Mdl TogglePlaylist
+    div []
+        [ Options.span [Typography.title] [ text "Saved Playlists"]
+        , YoutubePlaylistsTable.view (subModel selectedPlaylists) Mdl SyncVideosButtonMsg
+        , Options.span [Typography.title] [ text "All Playlists"]
+        , YoutubePlaylistsTable.view (subModel allPlaylists) Mdl SyncVideosButtonMsg
+        ]
 
 
 update : Maybe String -> Msg -> Model -> ( Model, Cmd Msg )
@@ -109,7 +119,7 @@ update token msg model =
                 Ok playlistsResp ->
                     let
                         newAllYtPlaylists =
-                            List.foldr (\newPl allPls-> Dict.insert newPl.id newPl allPls) model.allYoutubePlaylists playlistsResp.items
+                            List.foldr (\newPl allPls -> Dict.insert newPl.id newPl allPls) model.allYoutubePlaylists playlistsResp.items
 
                         nextCmd =
                             Maybe.map2 (\tkn nextPageTkn -> fetchPlaylists tkn (Just nextPageTkn)) token playlistsResp.nextPageToken
@@ -158,13 +168,13 @@ update token msg model =
 
         SyncVideosButtonMsg subMsg ->
             let
-                ( subModel, subCmd, error ) =
-                    SyncVideosButton.update token subMsg model.syncVideosButtonModel
+                ( mdlModel, subCmd, error ) =
+                    SyncVideosButton.update token subMsg model.mdl
 
                 newError =
                     Maybe.map (\x -> [ x ]) error |> Maybe.withDefault []
             in
-            { model | errors = List.append model.errors newError, syncVideosButtonModel = subModel } ! [ Cmd.map SyncVideosButtonMsg subCmd ]
+            { model | errors = List.append model.errors newError, mdl = mdlModel } ! [ Cmd.map SyncVideosButtonMsg subCmd ]
 
 
 subscriptions : Model -> Sub Msg

@@ -12,14 +12,7 @@ import Youtube.PlaylistItems as YTPlaylistItems
 
 
 type alias Model =
-    { mdl : Material.Model
-    }
-
-
-initialModel : Model
-initialModel =
-    { mdl = Material.model
-    }
+    Material.Model
 
 
 type Msg
@@ -35,12 +28,12 @@ type alias FetchedPlaylistRespWrapper =
     }
 
 
-view : Maybe String -> List String -> Model -> Html Msg
-view token playlistIds model =
+view : List Int -> Maybe String -> List String -> Model -> Html Msg
+view mdlIdx token playlistIds model =
     div []
         [ Button.render Mdl
-            [ 0 ]
-            model.mdl
+            mdlIdx
+            model
             [ Button.raised
             , Button.ripple
             , Options.onClick <| TriggerSync playlistIds
@@ -58,9 +51,9 @@ update token msg model =
         Mdl msg_ ->
             let
                 ( model_, cmd ) =
-                    Material.update Mdl msg_ model
+                    Material.update_ Mdl msg_ model
             in
-            ( model_, cmd, Nothing )
+            ( Maybe.withDefault model model_, cmd, Nothing )
 
         TriggerSync playlistIds ->
             let
