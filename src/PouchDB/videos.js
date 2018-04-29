@@ -30,6 +30,7 @@ appPromise.then(function(app) {
     }
 
     function updateVideo(oldDoc, newDoc) {
+        newDoc['_rev'] = oldDoc['_rev'];
         let containsById = (arr, elem) => arr.findIndex(x => x.id === elem.id) > -1;
         let channelsToAdd = [];
         let playlistsToAdd = [];
@@ -54,8 +55,8 @@ appPromise.then(function(app) {
 
         documents.forEach(doc => {
             db.get(doc.id).then(function(oldDoc) {
-                let newDoc = updateVideo(oldDoc, doc);
-                db.put(newDoc).then(function() {
+                updateVideo(oldDoc, doc);
+                db.put(doc).then(function() {
                     // success
                 }).catch(function(err) {
                     sendErr('saveOrUpdateVideos', err);

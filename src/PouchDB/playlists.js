@@ -19,13 +19,22 @@ appPromise.then(function(app) {
         console.log("storePlaylist");
         console.log(ytPlaylist);
 
-        db.put(ytPlaylist, {
-            force: true
-        }).then(function() {
-            //success
-            fetchYtPlaylistDoc(ytPlaylist.id);
+        db.get(ytPlaylist.id).then(function(doc) {
+            // ignore since playlist is already stored
+            // TODO maybe update?
         }).catch(function(err) {
-            sendPlaylistPortError(err);
+            if (err.status === 404) {
+                db.put(ytPlaylist, {
+                    force: true
+                }).then(function() {
+                    //success
+                    fetchYtPlaylistDoc(ytPlaylist.id);
+                }).catch(function(err) {
+                    sendPlaylistPortError(err);
+                });
+            } else {
+                sendPlaylistPortError(err);
+            }
         });
     });
 
