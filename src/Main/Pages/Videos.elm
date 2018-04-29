@@ -1,6 +1,8 @@
 module Main.Pages.Videos exposing (..)
 
 import Html exposing (Html, button, div, text)
+import Main.View.ErrorCard
+import Main.View.PaginationButtons as PaginationButtons
 import Main.View.VideosList as VideosList
 import Material
 import Material.Button as Button
@@ -15,14 +17,17 @@ type alias Model =
     , currentIndex : Int
     , searchResults : List VideoDB.Doc
     , searchTerms : Maybe String
+    , errors : List String
     }
 
 
 type Msg
     = NoOp
+    | Mdl (Material.Msg Msg)
     | FetchedVideos VideoDB.VideosResult
     | FetchVideos Int
-    | Mdl (Material.Msg Msg)
+    | DismissError
+    | VideosDBErr String
 
 
 initialModel : Model
@@ -33,6 +38,7 @@ initialModel =
     , currentIndex = 0
     , searchResults = []
     , searchTerms = Nothing
+    , errors = []
     }
 
 
@@ -42,23 +48,19 @@ initialModel =
 
 view : Model -> Html Msg
 view model =
+    let
+        paginationModel =
+            { mdl = model.mdl, currentIndex = model.currentIndex, limitPerPage = VideoDB.defaultVideosLimitArg, total = model.totalVideos }
+    in
     div []
         [ text "Videos Page"
-        , nextButton model
+        , Main.View.ErrorCard.view model.mdl model.errors DismissError Mdl
+        , PaginationButtons.view paginationModel Mdl FetchVideos
         , VideosList.view model.playlistItems
-        , text <| toString model
-        ]
+        , PaginationButtons.view paginationModel Mdl FetchVideos
 
-
-nextButton : Model -> Html Msg
-nextButton model =
-    Button.render Mdl
-        [ 0 ]
-        model.mdl
-        [ Button.raised
-        , Options.onClick <| FetchVideos (model.currentIndex + VideoDB.defaultVideosLimitArg)
+        --, text <| toString model
         ]
-        [ text "Next Videos" ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -67,20 +69,27 @@ update msg model =
         NoOp ->
             model ! []
 
+        Mdl msg_ ->
+            Material.update Mdl msg_ model
+
         FetchedVideos videosResult ->
             ( { model | playlistItems = videosResult.docs, totalVideos = Just videosResult.totalRows }, Cmd.none )
 
         FetchVideos nextIndex ->
             { model | currentIndex = nextIndex } ! [ VideoDB.fetchVideosArgs nextIndex |> VideoDB.fetchVideos ]
 
-        Mdl msg_ ->
-            Material.update Mdl msg_ model
+        DismissError ->
+            { model | errors = [] } ! []
+
+        VideosDBErr error ->
+            { model | errors = List.append model.errors [ error ] } ! []
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ VideoDB.fetchedVideos FetchedVideos
+        , VideoDB.pouchdbVideoErr VideosDBErr
         ]
 
 
