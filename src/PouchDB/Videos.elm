@@ -92,7 +92,7 @@ newFromYoutubePlaylistItem item =
             , description = snippet.description
             , channels = [ { id = snippet.channelId, title = snippet.channelTitle } ]
             , playlists = [ { id = playlistId, position = position } ]
-            , thumbnails = Dict.toList snippet.thumbnails
+            , thumbnails = Maybe.map Dict.toList snippet.thumbnails |> Maybe.withDefault []
             }
     in
     Maybe.map fromSnippet item.snippet

@@ -151,7 +151,7 @@ type alias Snippet =
     , channelTitle : String
     , playlistId : String
     , position : Int
-    , thumbnails : Dict.Dict String Thumbnail
+    , thumbnails : Maybe (Dict.Dict String Thumbnail)
     , resourceId : ResourceId
     }
 
@@ -200,7 +200,7 @@ snippetDecoder =
         |> required "channelTitle" string
         |> required "playlistId" string
         |> required "position" int
-        |> required "thumbnails" (dict thumbnailDecoder)
+        |> optional "thumbnails" (nullable (dict thumbnailDecoder)) Nothing
         |> required "resourceId" resourceIdDecoder
 
 
