@@ -84,7 +84,7 @@ newFromYoutubePlaylistItem item =
                 playlistId =
                     snippet.playlistId
             in
-            { id = videoId
+            { id = "v" ++ videoId
             , rev = Nothing
             , videoId = videoId
             , publishedAt = snippet.publishedAt
