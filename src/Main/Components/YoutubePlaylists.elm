@@ -88,7 +88,11 @@ viewPlaylists token model =
             Dict.toList model.selectedPlaylists |> List.map (\( _, x ) -> x)
 
         allPlaylists =
-            Dict.toList model.allYoutubePlaylists |> List.map (\( x, pl ) -> pl) |> List.map DBPlaylists.fromYT
+            Dict.toList model.allYoutubePlaylists
+                |> List.map (\( x, pl ) -> pl)
+                |> List.map DBPlaylists.fromYT
+                |> List.sortBy .publishedAt
+                |> List.reverse
 
         subModel playlists =
             { mdl = model.mdl
@@ -97,9 +101,9 @@ viewPlaylists token model =
             }
     in
     div []
-        [ Options.span [Typography.title] [ text "Saved Playlists"]
+        [ Options.span [ Typography.title ] [ text "Saved Playlists" ]
         , YoutubePlaylistsTable.view (subModel selectedPlaylists) Mdl SyncVideosButtonMsg
-        , Options.span [Typography.title] [ text "All Playlists"]
+        , Options.span [ Typography.title ] [ text "All Playlists" ]
         , YoutubePlaylistsTable.view (subModel allPlaylists) Mdl SyncVideosButtonMsg
         ]
 

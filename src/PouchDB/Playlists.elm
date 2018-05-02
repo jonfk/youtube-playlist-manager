@@ -7,6 +7,7 @@ type alias Doc =
     { id : String
     , rev : Maybe String
     , title : String
+    , publishedAt: String
     }
 
 
@@ -15,6 +16,7 @@ fromYT playlist =
     { id = playlist.id
     , rev = Nothing
     , title = playlist.snippet.title
+    , publishedAt = playlist.snippet.publishedAt
     }
 
 
