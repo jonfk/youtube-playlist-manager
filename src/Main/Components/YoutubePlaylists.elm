@@ -172,6 +172,7 @@ subscriptions model =
         [ DBPlaylists.fetchedPlaylist FetchedDBPlaylist
         , DBPlaylists.fetchedAllPlaylists FetchedDBPlaylists
         , DBPlaylists.playlistsErr DBPlaylistsErr
+        , Sub.map SyncVideosButtonMsg SyncVideosButton.subscriptions
         ]
 
 

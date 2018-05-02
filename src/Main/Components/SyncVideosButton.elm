@@ -21,6 +21,7 @@ type Msg
     | Mdl (Material.Msg Msg)
     | TriggerSync (List DBPlaylists.Doc)
     | FetchedPlaylistItems (Result Http.Error FetchedPlaylistRespWrapper)
+    | VideoDBErrors String
 
 
 type alias FetchedPlaylistRespWrapper =
@@ -102,10 +103,14 @@ update token msg model =
                 Err error ->
                     ( model, Cmd.none, Errors.extractBody error |> Just )
 
+        VideoDBErrors error ->
+            (model, Cmd.none, Just error)
 
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.batch []
+
+
+subscriptions : Sub Msg
+subscriptions =
+    Sub.batch [VideoDB.pouchdbVideoErr VideoDBErrors]
 
 
 cmdOnLoad : Cmd Msg
