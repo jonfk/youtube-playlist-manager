@@ -20,9 +20,9 @@ scopeToString scope =
         Partner -> "https://www.googleapis.com/auth/youtubepartner"
         PartnerChannelAudit -> "https://www.googleapis.com/auth/youtubepartner-channel-audit"
 
-buildAuthorizeUri : String -> String -> Scope -> String -> String
-buildAuthorizeUri clientId redirectUri scope stateParam =
-    "https://accounts.google.com/o/oauth2/v2/auth?" ++ "client_id=" ++ clientId ++
+buildUri : String -> String -> Scope -> String -> String
+buildUri clientId redirectUri scope stateParam =
+    "https://accounts.google.com/o/oauth2/v2/auth?" ++ "client_id=" ++ Http.encodeUri clientId ++
         "&redirect_uri=" ++ Http.encodeUri redirectUri ++
         "&response_type=token" ++
         "&scope=" ++ Http.encodeUri (scopeToString scope) ++

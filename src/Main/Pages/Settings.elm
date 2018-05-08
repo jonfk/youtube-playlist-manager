@@ -2,6 +2,7 @@ module Main.Pages.Settings exposing (..)
 
 import Html exposing (Html, div, text)
 import Main.Components.YoutubePlaylists
+import Main.View.AuthorizeYoutubeButton
 import Main.View.ErrorCard
 import Material
 import Material.Button as Button
@@ -64,13 +65,7 @@ viewSettingsActionsList model =
     let
         signInButton =
             [ Lists.content [] [ text "Sign In" ]
-            , Button.render Mdl
-                [ 1 ]
-                model.mdl
-                [ Button.icon
-                , Options.onClick AuthorizeYoutube
-                ]
-                [ Icon.i "account_circle" ]
+            , Main.View.AuthorizeYoutubeButton.view Mdl model.mdl
             ]
 
         tokenView token =
@@ -149,7 +144,7 @@ update msg model =
             ( { model | youtubeData = ytDataDoc }, Cmd.none )
 
         PouchDBError error ->
-            { model | errors = List.append model.errors [error] } ! []
+            { model | errors = List.append model.errors [ error ] } ! []
 
         DismissError ->
             { model | errors = [] } ! []
