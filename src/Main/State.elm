@@ -8,6 +8,7 @@ import Material
 import Navigation
 import PouchDB
 import PouchDB.Search
+import PouchDB.Youtube
 import Youtube.Authorize exposing (parseTokenFromRedirectUri)
 import Youtube.PlaylistItems exposing (Filter(..), Part(..), PlaylistItem, PlaylistItemListResponse)
 
@@ -73,6 +74,7 @@ urlUpdate model route =
     let
         newModel =
             { model | location = route }
+
     in
     newModel ! [ cmdOnNewLocation model route ]
 
@@ -88,6 +90,9 @@ cmdOnNewLocation model route =
 
         Just Route.Settings ->
             Cmd.map SettingsMsg <| Main.Pages.Settings.cmdOnPageLoad model.settingsPage
+
+        Just (Route.YoutubeRedirect data) ->
+            PouchDB.Youtube.updateYoutubeData <| PouchDB.Youtube.fromRedirectData data
 
 
 

@@ -1,32 +1,31 @@
 port module PouchDB.Youtube exposing (..)
 
+import Youtube.Authorize
+
 
 type alias YoutubeDataDoc =
-    { rev : String
-    , token : Maybe String
+    { token : Maybe String
     }
 
 
 defaultYoutubeDataDoc : YoutubeDataDoc
 defaultYoutubeDataDoc =
-    { rev = ""
-    , token = Nothing
+    { token = Nothing
     }
+
 
 unwrap : Maybe YoutubeDataDoc -> YoutubeDataDoc
 unwrap doc =
     Maybe.withDefault defaultYoutubeDataDoc doc
 
 
-type alias YoutubePlaylistDoc =
-    { id : String
-    , type_ : String
-    , publishedAt : String
-    , channelId : String
+fromRedirectData : Youtube.Authorize.YoutubeRedirectData -> YoutubeDataDoc
+fromRedirectData data =
+    { token = data.accessToken
     }
 
 
-port storeYoutubeData : YoutubeDataDoc -> Cmd msg
+port updateYoutubeData : YoutubeDataDoc -> Cmd msg
 
 
 port fetchYoutubeData : () -> Cmd msg

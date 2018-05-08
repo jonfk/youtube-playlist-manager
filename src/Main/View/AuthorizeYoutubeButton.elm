@@ -15,9 +15,9 @@ view mdlMsg mdlModel =
     let
         youtubeAuthorizeUrl =
             Youtube.Authorize.buildUri "1022327474530-ij2unslv94d4hjcrdh4toijljd17kt4g.apps.googleusercontent.com"
-                "http://localhost:9000/test"
+                "http://localhost:9000/"
                 Youtube.Authorize.ReadOnly
-                "stateparam"
+                "stateparam2"
     in
     Html.a [ href youtubeAuthorizeUrl ]
         [ Button.render mdlMsg

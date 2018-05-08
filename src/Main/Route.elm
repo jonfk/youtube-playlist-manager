@@ -1,13 +1,16 @@
 module Main.Route exposing (..)
 
+import Dict
 import Http
 import Navigation
-import UrlParser exposing ((</>), (<?>), int, map, oneOf, parseHash, s, string, top)
+import Youtube.Authorize
+import UrlParser exposing ((</>), (<?>), int, intParam, map, oneOf, parseHash, s, string, stringParam, top)
 
 
 type Route
     = Home
     | Settings
+    | YoutubeRedirect Youtube.Authorize.YoutubeRedirectData
 
 
 type alias Model =
@@ -41,7 +44,19 @@ urlFor loc =
         Settings ->
             "#settings"
 
+        YoutubeRedirect data ->
+            "#/"
+
 
 locFor : Navigation.Location -> Maybe Route
-locFor path =
-    parseHash pathParser path
+locFor location =
+    let
+        parsedRedirect =
+            Youtube.Authorize.redirectStringParser location
+    in
+    case parsedRedirect of
+        Just ytRedir ->
+            Just <| YoutubeRedirect ytRedir
+
+        Nothing ->
+            parseHash pathParser (Debug.log "location " location)

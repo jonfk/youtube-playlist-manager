@@ -1,5 +1,5 @@
 
-.PHONY: package-elm clean deep-clean dependencies
+.PHONY: package-elm clean deep-clean dependencies serve
 
 JS_FILES = $(shell find src -type f -name '*.js')
 ELM_FILES = $(shell find src -type f -name '*.elm')
@@ -7,7 +7,7 @@ ELM_FILES = $(shell find src -type f -name '*.elm')
 package: dependencies build/main.js build/main-interop.js config/manifest.json style/style.css
 	mkdir -p build/main build/popup
 
-	cp src/main/main.html build/main/
+	cp src/main/main.html build/index.html
 
 	cp src/popup/popup-interop.js build/popup/
 	cp src/popup/popup.html build/popup/
@@ -17,10 +17,13 @@ package: dependencies build/main.js build/main-interop.js config/manifest.json s
 	@echo successfully packaged elm generated files and js files
 
 build/main.js: $(ELM_FILES)
-	elm-make src/Main/Main.elm --output build/main/main.js
+	elm-make src/Main/Main.elm --output build/main.js
 
 build/main-interop.js: $(JS_FILES)
 	./node_modules/.bin/webpack-cli
+
+serve:
+	cd build && python -m SimpleHTTPServer 9000
 
 clean:
 	rm -rf build

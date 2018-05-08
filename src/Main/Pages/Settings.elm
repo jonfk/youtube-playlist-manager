@@ -27,7 +27,6 @@ type Msg
     = NoOp
     | Mdl (Material.Msg Msg)
     | AuthorizeYoutube
-    | AuthorizedRedirectUri Navigation.Location
     | FetchedYoutubeData (Maybe PouchDB.Youtube.YoutubeDataDoc)
     | DeleteYoutubeToken
     | PouchDBError String
@@ -114,22 +113,6 @@ update msg model =
         AuthorizeYoutube ->
             ( model, Youtube.Authorize.authorize True )
 
-        AuthorizedRedirectUri redirectUri ->
-            let
-                a =
-                    Debug.log "redirectUri received" redirectUri
-
-                parsedToken =
-                    Debug.log "parsed token" <| Youtube.Authorize.parseTokenFromRedirectUri redirectUri
-
-                youtubeData =
-                    PouchDB.Youtube.unwrap model.youtubeData
-
-                newYoutubeData =
-                    { youtubeData | token = parsedToken }
-            in
-            { model | youtubeData = Just newYoutubeData } ! [ PouchDB.Youtube.storeYoutubeData newYoutubeData ]
-
         DeleteYoutubeToken ->
             let
                 ytData =
@@ -138,7 +121,7 @@ update msg model =
                 newYoutubeData =
                     { ytData | token = Nothing }
             in
-            { model | youtubeData = Just newYoutubeData } ! [ PouchDB.Youtube.storeYoutubeData newYoutubeData ]
+            { model | youtubeData = Just newYoutubeData } ! [ PouchDB.Youtube.updateYoutubeData newYoutubeData ]
 
         FetchedYoutubeData ytDataDoc ->
             ( { model | youtubeData = ytDataDoc }, Cmd.none )
@@ -163,8 +146,7 @@ update msg model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Youtube.Authorize.authorizedRedirectUri AuthorizedRedirectUri
-        , PouchDB.Youtube.fetchedYoutubeData FetchedYoutubeData
+        [ PouchDB.Youtube.fetchedYoutubeData FetchedYoutubeData
         , PouchDB.Youtube.youtubeDataPortErr PouchDBError
         , Sub.map YTPlaylistsComponentMsg <| Main.Components.YoutubePlaylists.subscriptions model.ytPlaylistsComp
         ]

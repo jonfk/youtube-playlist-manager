@@ -141,10 +141,16 @@ viewBody : Model -> Html Msg
 viewBody model =
     case model.location of
         Nothing ->
-            text "404"
+            Main.Pages.Videos.view model.videosPage |> Html.map VideosMsg
+            --text "404"
 
         Just Route.Home ->
             Main.Pages.Videos.view model.videosPage |> Html.map VideosMsg
 
         Just Route.Settings ->
             Main.Pages.Settings.view model.settingsPage |> Html.map SettingsMsg
+
+        Just (Route.YoutubeRedirect data) ->
+            -- TODO implement history and redirect to last in history
+            Main.Pages.Settings.view model.settingsPage |> Html.map SettingsMsg
+            --text "youtube redirect"

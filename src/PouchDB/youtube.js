@@ -8,20 +8,33 @@ import appPromise from '../Main/elm-app';
 appPromise.then(function(app) {
     const YOUTUBE_DATA_DOC_ID = "YOUTUBE_DATA_DOC_ID";
 
-    app.ports.storeYoutubeData.subscribe(function(youtubeDataDoc) {
+    app.ports.updateYoutubeData.subscribe(function(youtubeDataDoc) {
         youtubeDataDoc['_id'] = YOUTUBE_DATA_DOC_ID;
         youtubeDataDoc.type = YOUTUBE_DATA_DOC_TYPE;
-        youtubeDataDoc['_rev'] = youtubeDataDoc.rev;
 
-        db.put(youtubeDataDoc, {
-            force: true
-        }).then(function() {
-            console.log("successfully saved youtubedata");
-            // success
-            fetchYoutubeDataDoc();
+        db.get(YOUTUBE_DATA_DOC_ID).then(function(doc) {
+            youtubeDataDoc['_rev'] = doc['_rev'];
+            db.put(youtubeDataDoc, {
+                force: true
+            }).then(function() {
+                // success
+                console.log("successfully saved youtubedata");
+                fetchYoutubeDataDoc();
+            }).catch(function(err) {
+                console.log(err);
+                app.ports.youtubeDataPortErr.send(JSON.stringify(err));
+            });
         }).catch(function(err) {
-            console.log(err);
-            app.ports.youtubeDataPortErr.send(JSON.stringify(err));
+            if (err.status === 404) {
+                db.put(youtubeDataDoc, {force: true}).then(function() {
+                    // success
+                    console.log("successfully saved youtubedata");
+                    fetchYoutubeDataDoc();
+                });
+            } else {
+                console.log(err);
+                app.ports.youtubeDataPortErr.send(JSON.stringify(err));
+            }
         });
     });
 
