@@ -1,7 +1,6 @@
-module Main.Pages.Playlists exposing (..)
+module Main.Pages.Playlists exposing (Model, Msg(..), cmdOnPageLoad, initialModel, subscriptions, update, view)
 
 import Html exposing (Html, button, div, text)
-import PouchDB.Youtube
 
 
 type alias Model =
@@ -10,8 +9,6 @@ type alias Model =
 
 type Msg
     = NoOp
-    | FetchedYoutubeData (Maybe PouchDB.Youtube.YoutubeDataDoc)
-    | PouchDBError String
 
 
 initialModel : Model
@@ -35,9 +32,7 @@ update msg model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ PouchDB.Youtube.fetchedYoutubeData FetchedYoutubeData
-        , PouchDB.Youtube.youtubeDataPortErr PouchDBError
-        ]
+        []
 
 
 cmdOnPageLoad : Cmd Msg

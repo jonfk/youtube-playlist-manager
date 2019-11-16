@@ -1,4 +1,4 @@
-module Main.Components.SyncVideosButton exposing (..)
+module Main.Components.SyncVideosButton exposing (FetchedPlaylistRespWrapper, Model, Msg(..), cmdOnLoad, fetchPlaylistItems, subscriptions, update, view)
 
 import Errors
 import Html exposing (Html, button, div, text)
@@ -6,8 +6,8 @@ import Http
 import Material
 import Material.Button as Button
 import Material.Options as Options
-import PouchDB.Videos as VideoDB
 import PouchDB.Playlists as DBPlaylists
+import PouchDB.Videos as VideoDB
 import Task
 import Youtube.PlaylistItems as YTPlaylistItems
 
@@ -60,7 +60,7 @@ update token msg model =
         TriggerSync playlists ->
             let
                 fetchItems playlist =
-                    Maybe.map (\tkn -> Cmd.batch [fetchPlaylistItems playlist.id tkn Nothing, DBPlaylists.storePlaylist playlist]) token
+                    Maybe.map (\tkn -> Cmd.batch [ fetchPlaylistItems playlist.id tkn Nothing, DBPlaylists.storePlaylist playlist ]) token
 
                 cmds =
                     List.map (\playlist -> fetchItems playlist |> Maybe.withDefault Cmd.none) playlists
@@ -104,13 +104,12 @@ update token msg model =
                     ( model, Cmd.none, Errors.extractBody error |> Just )
 
         VideoDBErrors error ->
-            (model, Cmd.none, Just error)
-
+            ( model, Cmd.none, Just error )
 
 
 subscriptions : Sub Msg
 subscriptions =
-    Sub.batch [VideoDB.pouchdbVideoErr VideoDBErrors]
+    Sub.batch [ VideoDB.pouchdbVideoErr VideoDBErrors ]
 
 
 cmdOnLoad : Cmd Msg

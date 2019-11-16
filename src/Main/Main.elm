@@ -1,17 +1,9 @@
-module Main exposing (..)
+module Main exposing (Flags, MenuItem, Model, Msg(..), cmdOnNewLocation, initWithFlags, main, menuItems, subscriptions, update, urlUpdate, view, viewBody)
 
 import Html exposing (Html, button, div, h2, text)
 import Main.Pages.Settings
 import Main.Pages.Videos
 import Main.Route as Route
-import Main.State exposing (..)
-import Material
-import Material.Color as Color
-import Material.Dialog as Dialog
-import Material.Icon as Icon
-import Material.Layout as Layout
-import Material.Options as Options exposing (cs, css, when)
-import Material.Scheme
 import Maybe
 import Navigation
 
@@ -45,27 +37,9 @@ type alias Flags =
     {}
 
 
-
--- VIEW
-
-
 view : Model -> Html Msg
 view model =
-    Material.Scheme.top <|
-        Layout.render Mdl
-            model.mdl
-            [ Layout.fixedHeader
-            , Options.css "display" "flex !important"
-            , Options.css "flex-direction" "row"
-            , Options.css "align-items" "center"
-            ]
-            { header = [ viewHeader model ]
-            , drawer = [ viewDrawer model ]
-            , tabs = ( [], [] )
-            , main =
-                [ viewBody model
-                ]
-            }
+    div [] [ text "placeholder", viewBody model ]
 
 
 type alias MenuItem =
@@ -82,68 +56,13 @@ menuItems =
     ]
 
 
-viewDrawerMenuItem : Model -> MenuItem -> Html Msg
-viewDrawerMenuItem model menuItem =
-    let
-        isCurrentLocation =
-            model.location == menuItem.route
-
-        onClickCmd =
-            case ( isCurrentLocation, menuItem.route ) of
-                ( False, Just route ) ->
-                    route |> Route.urlFor |> NewUrl |> Options.onClick
-
-                _ ->
-                    Options.nop
-    in
-    Layout.link
-        [ onClickCmd
-        , when isCurrentLocation (Color.background <| Color.color Color.BlueGrey Color.S600)
-        , Options.css "color" "rgba(255, 255, 255, 0.56)"
-        , Options.css "font-weight" "500"
-        ]
-        [ Icon.view menuItem.iconName
-            [ Color.text <| Color.color Color.BlueGrey Color.S500
-            , Options.css "margin-right" "32px"
-            ]
-        , text menuItem.text
-        ]
-
-
-viewDrawer : Model -> Html Msg
-viewDrawer model =
-    Layout.navigation
-        [ Color.background <| Color.color Color.BlueGrey Color.S800
-        , Color.text <| Color.color Color.BlueGrey Color.S50
-        , Options.css "flex-grow" "1"
-        ]
-    <|
-        List.map (viewDrawerMenuItem model) menuItems
-            ++ [ Layout.spacer
-               , Layout.link
-                    [ Dialog.openOn "click"
-                    ]
-                    [ Icon.view "help"
-                        [ Color.text <| Color.color Color.BlueGrey Color.S500
-                        ]
-                    ]
-               ]
-
-
-viewHeader : Model -> Html Msg
-viewHeader model =
-    Layout.row
-        []
-        [ Layout.title [] [ text "Youtube Playlist Manager" ] ]
-
-
 viewBody : Model -> Html Msg
 viewBody model =
     case model.location of
         Nothing ->
             Main.Pages.Videos.view model.videosPage |> Html.map VideosMsg
-            --text "404"
 
+        --text "404"
         Just Route.Home ->
             Main.Pages.Videos.view model.videosPage |> Html.map VideosMsg
 
@@ -153,4 +72,93 @@ viewBody model =
         Just (Route.YoutubeRedirect data) ->
             -- TODO implement history and redirect to last in history
             Main.Pages.Settings.view model.settingsPage |> Html.map SettingsMsg
-            --text "youtube redirect"
+
+
+
+--text "youtube redirect"
+
+
+type alias Model =
+    { location : Maybe Route.Route
+    , mdl : Material.Model
+    , videosPage : Main.Pages.Videos.Model
+    , settingsPage : Main.Pages.Settings.Model
+    }
+
+
+
+-- UPDATE
+
+
+type Msg
+    = NoOp
+    | NavigateTo Navigation.Location
+    | Mdl (Material.Msg Msg)
+    | NewUrl String
+    | VideosMsg Main.Pages.Videos.Msg
+    | SettingsMsg Main.Pages.Settings.Msg
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        NoOp ->
+            ( model, Cmd.none )
+
+        NavigateTo location ->
+            location
+                |> Route.locFor
+                |> urlUpdate model
+
+        Mdl msg_ ->
+            Material.update Mdl msg_ model
+
+        NewUrl url ->
+            model ! [ Navigation.newUrl url ]
+
+        VideosMsg videosMsg_ ->
+            let
+                ( subModel, subCmd ) =
+                    Main.Pages.Videos.update videosMsg_ model.videosPage
+            in
+            { model | videosPage = subModel } ! [ Cmd.map VideosMsg subCmd ]
+
+        SettingsMsg subMsg_ ->
+            let
+                ( subModel, subCmd ) =
+                    Main.Pages.Settings.update subMsg_ model.settingsPage
+            in
+            { model | settingsPage = subModel } ! [ Cmd.map SettingsMsg subCmd ]
+
+
+urlUpdate : Model -> Maybe Route -> ( Model, Cmd Msg )
+urlUpdate model route =
+    let
+        newModel =
+            { model | location = route }
+    in
+    newModel ! [ cmdOnNewLocation model route ]
+
+
+cmdOnNewLocation : Model -> Maybe Route.Route -> Cmd Msg
+cmdOnNewLocation model route =
+    case route of
+        Nothing ->
+            Cmd.none
+
+        Just Route.Home ->
+            Cmd.map VideosMsg Main.Pages.Videos.cmdOnPageLoad
+
+        Just Route.Settings ->
+            Cmd.map SettingsMsg <| Main.Pages.Settings.cmdOnPageLoad model.settingsPage
+
+        Just (Route.YoutubeRedirect data) ->
+            PouchDB.Youtube.updateYoutubeData <| PouchDB.Youtube.fromRedirectData data
+
+
+subscriptions : Model -> Sub Msg
+subscriptions model =
+    Sub.batch
+        [ Sub.map VideosMsg <| Main.Pages.Videos.subscriptions model.videosPage
+        , Sub.map SettingsMsg <| Main.Pages.Settings.subscriptions model.settingsPage
+        ]
